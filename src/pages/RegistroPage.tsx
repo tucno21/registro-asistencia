@@ -4,8 +4,6 @@ import {
   Save,
   Calendar,
   ChevronDown,
-  CheckCheck,
-  CheckCircle2,
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { useEstudiantesStore } from '../store/estudiantesStore'
@@ -18,19 +16,31 @@ import Button from '../components/Button'
 import Spinner from '../components/Spinner'
 import EmptyState from '../components/EmptyState'
 import ConfirmDialog from '../components/ConfirmDialog'
-import CategoryChip from '../components/CategoryChip'
-import Avatar from '../components/Avatar'
 
 type Selecciones = Record<string, string | null>
 
 const hoy = () => new Date().toISOString().split('T')[0]
 
-const softBgClasses: Record<ColorCategoria, string> = {
-  success: 'bg-success-bg text-success',
-  warning: 'bg-warning-bg text-warning',
-  error: 'bg-error-bg text-error',
-  info: 'bg-info-bg text-info',
-  neutral: 'bg-surface-alt text-text-secondary',
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
+
+function abreviarNombre(nombreCompleto: string): string {
+  const [apellidosPart, nombresPart] = nombreCompleto.split(',').map(s => s.trim())
+  if (!nombresPart) {
+    const palabras = nombreCompleto.trim().split(/\s+/)
+    if (palabras.length < 2) return nombreCompleto
+    return `${cap(palabras[palabras.length - 1])}, ${cap(palabras[0])}`
+  }
+  const primerApellido = apellidosPart.split(/\s+/)[0] ?? ''
+  const primerNombre = nombresPart.split(/\s+/)[0] ?? ''
+  return `${cap(primerApellido)}, ${cap(primerNombre)}`
+}
+
+const letterClasses: Record<ColorCategoria, string> = {
+  success: 'bg-success text-success-foreground',
+  warning: 'bg-warning text-warning-foreground',
+  error: 'bg-error text-error-foreground',
+  info: 'bg-info text-info-foreground',
+  neutral: 'bg-slate-500 text-white',
 }
 
 const RegistroPage = () => {
@@ -87,6 +97,8 @@ const RegistroPage = () => {
     loadExisting()
   }, [loadExisting])
 
+  // Se mantiene el mismo comportamiento de "toggle": si se vuelve a marcar
+  // la misma categoría ya seleccionada, se deselecciona.
   const setCategoria = (estudianteId: string, tipoRegistroId: string, categoriaId: string) => {
     setSelecciones((prev) => ({
       ...prev,
@@ -97,9 +109,12 @@ const RegistroPage = () => {
 
   const marcarTodos = (tipoRegistroId: string, categoriaId: string) => {
     setSelecciones((prev) => {
+      const allMarked = estudiantesSeccion.every(
+        (e) => prev[`${e.id}:${tipoRegistroId}`] === categoriaId,
+      )
       const next = { ...prev }
       for (const e of estudiantesSeccion) {
-        next[`${e.id}:${tipoRegistroId}`] = categoriaId
+        next[`${e.id}:${tipoRegistroId}`] = allMarked ? null : categoriaId
       }
       return next
     })
@@ -174,26 +189,6 @@ const RegistroPage = () => {
     }
   }
 
-  // --- Derived display values (no state changes) ---
-  const isCompleto = (estId: string): boolean =>
-    obligatorios.length > 0 &&
-    obligatorios.every((t) => selecciones[`${estId}:${t.id}`])
-
-  const resumenCategorias = tiposActivos.flatMap((t) =>
-    t.categorias.map((cat) => ({
-      key: `${t.id}:${cat.id}`,
-      tipoNombre: t.nombre,
-      catNombre: cat.nombre,
-      catColor: cat.color,
-      count: estudiantesSeccion.filter(
-        (est) => selecciones[`${est.id}:${t.id}`] === cat.id,
-      ).length,
-    })),
-  )
-  const resumenFiltrado = resumenCategorias.filter((r) => r.count > 0)
-
-  const completados = estudiantesSeccion.filter((e) => isCompleto(e.id)).length
-
   return (
     <div className="flex flex-col gap-4">
       {/* ===== Filter toolbar ===== */}
@@ -255,172 +250,118 @@ const RegistroPage = () => {
         />
       ) : (
         <>
-          {/* ===== Summary chips bar ===== */}
-          {resumenFiltrado.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              {resumenFiltrado.map((r) => (
-                <span
-                  key={r.key}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${softBgClasses[r.catColor]}`}
-                >
-                  <span className="text-sm font-bold">{r.count}</span>
-                  <span className="opacity-80">{r.catNombre}</span>
-                </span>
-              ))}
-              {completados > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold bg-success-bg text-success">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  {completados} completo{completados !== 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* ===== Bulk action bar ===== */}
-          {tiposActivos.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 rounded-card bg-surface-alt px-3 py-2.5">
-              <span className="mr-1 flex items-center gap-1 text-xs font-medium text-text-muted">
-                <CheckCheck className="h-3.5 w-3.5" />
-                Acción rápida:
-              </span>
-              {tiposActivos.map((t) => {
-                const primeraCat = t.categorias[0]
-                if (!primeraCat) return null
-                return (
-                  <Button
-                    key={t.id}
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => marcarTodos(t.id, primeraCat.id)}
-                  >
-                    {t.nombre}: {primeraCat.nombre}
-                  </Button>
-                )
-              })}
-            </div>
-          )}
-
-          {/* ===== Mobile: compact list rows ===== */}
-          <div className="overflow-hidden rounded-card border border-border md:hidden">
-            {estudiantesSeccion.map((est, idx) => {
-              const completo = isCompleto(est.id)
-              const fullName = est.nombreCompleto
-              return (
-                <div
-                  key={est.id}
-                  className={[
-                    'px-3 py-2.5',
-                    idx !== estudiantesSeccion.length - 1 ? 'border-b border-border' : '',
-                    idx % 2 === 1 ? 'bg-surface-alt/40' : '',
-                  ].join(' ')}
-                >
-                  {/* Name row */}
-                  <div className="mb-1.5 flex items-center gap-2.5">
-                    <Avatar name={fullName} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-text-primary">
-                        {est.nombreCompleto}
-                      </p>
-                      <p className="font-mono text-xs text-text-muted">{est.codigo}</p>
-                    </div>
-                    {completo ? (
-                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-success" />
-                    ) : obligatorios.length > 0 ? (
-                      <span className="h-2 w-2 flex-shrink-0 rounded-full bg-warning" />
-                    ) : null}
-                  </div>
-                  {/* Type groups - inline wrap */}
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pl-10.5">
-                    {tiposActivos.map((t) => {
-                      const selected = selecciones[`${est.id}:${t.id}`]
-                      return (
-                        <div key={t.id} className="flex items-center gap-1.5">
-                          <span className="whitespace-nowrap text-[10px] font-medium text-text-muted">
-                            {t.nombre}
-                            {t.obligatorio && <span className="text-error">*</span>}
-                          </span>
-                          <div className="flex gap-1">
-                            {t.categorias.map((cat) => (
-                              <CategoryChip
-                                key={cat.id}
-                                label={cat.nombre}
-                                color={cat.color}
-                                selected={selected === cat.id}
-                                onClick={() => setCategoria(est.id, t.id, cat.id)}
-                                size="sm"
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* ===== Desktop: table with column headers ===== */}
-          <div className="hidden overflow-x-auto rounded-card border border-border md:block">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-surface-alt text-left text-xs font-medium text-text-muted">
-                  <th className="px-4 py-3 min-w-[220px]">Estudiante</th>
-                  {tiposActivos.map((t) => (
-                    <th key={t.id} className="px-4 py-3 min-w-[140px]">
-                      {t.nombre}
-                      {t.obligatorio && <span className="ml-0.5 text-error">*</span>}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {estudiantesSeccion.map((est) => {
-                  const completo = isCompleto(est.id)
-                  const fullName = est.nombreCompleto
-                  return (
-                    <tr
-                      key={est.id}
-                      className="border-b border-border last:border-0 hover:bg-surface-alt/40"
+          {/* =====================================================================
+              Tabla estilo planilla: columna estudiante fija a la izquierda +
+              scroll horizontal para columnas de iniciales de categorías.
+          ====================================================================== */}
+          <Card padding="none" className="overflow-hidden">
+            <div className="overflow-auto">
+              <table className="w-full border-collapse text-xs">
+                <thead>
+                  <tr>
+                    <th
+                      rowSpan={2}
+                      className="sticky left-0 top-0 z-30 min-w-[110px] border-b border-r border-border bg-surface-alt px-2 py-1.5 text-left text-xs font-semibold text-text-secondary"
                     >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2.5">
-                          <Avatar name={fullName} />
-                          <div className="min-w-0">
-                            <p className="truncate font-medium text-text-primary">
-                        {est.nombreCompleto}
-                            </p>
-                            <p className="font-mono text-xs text-text-muted">{est.codigo}</p>
+                      #
+                    </th>
+                    {tiposActivos.map((t) => (
+                      <th
+                        key={t.id}
+                        colSpan={t.categorias.length}
+                        className="sticky top-0 z-20 border-b border-border bg-surface-alt px-1 py-1 text-center text-[10px] font-semibold uppercase tracking-wider text-text-muted"
+                      >
+                        {t.nombre}
+                      </th>
+                    ))}
+                  </tr>
+                  <tr>
+                    {tiposActivos.flatMap((t) =>
+                      t.categorias.map((cat, catIdx) => (
+                        <th
+                          key={cat.id}
+                          className={[
+                            'sticky top-[22px] z-20 min-w-[30px] border-b border-border bg-surface-alt px-0.5 py-1 text-center align-bottom',
+                            catIdx === 0 ? 'border-l-2 border-l-border' : 'border-l border-l-border/60',
+                          ].join(' ')}
+                        >
+                          <div className="flex flex-col items-center gap-px">
+                            <span className="text-xs font-bold text-text-primary leading-tight">
+                              {cat.nombre.charAt(0).toUpperCase()}
+                            </span>
+                            <button
+                              onClick={() => marcarTodos(t.id, cat.id)}
+                              className="flex h-4 w-4 items-center justify-center rounded text-text-secondary/70 transition-all hover:text-primary active:scale-75"
+                              aria-label={`Marcar todos como ${cat.nombre}`}
+                            >
+                              <ChevronDown className="h-3 w-3" />
+                            </button>
                           </div>
-                          {completo && (
-                            <CheckCircle2 className="ml-auto h-4 w-4 flex-shrink-0 text-success" />
-                          )}
-                        </div>
-                      </td>
-                      {tiposActivos.map((t) => {
-                        const selected = selecciones[`${est.id}:${t.id}`]
-                        return (
-                          <td key={t.id} className="px-4 py-3">
-                            <div className="flex flex-wrap gap-1.5">
-                              {t.categorias.map((cat) => (
-                                <CategoryChip
-                                  key={cat.id}
-                                  label={cat.nombre}
-                                  color={cat.color}
-                                  selected={selected === cat.id}
+                        </th>
+                      )),
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {estudiantesSeccion.map((est, idx) => {
+                    const rowBg = idx % 2 === 1 ? 'bg-surface-alt' : 'bg-surface'
+                    return (
+                      <tr key={est.id}>
+                        <td
+                          className={[
+                            'sticky left-0 z-10 border-b border-r border-border px-2 py-1',
+                            rowBg,
+                          ].join(' ')}
+                        >
+                          <span className="text-[11px] font-medium text-text-primary whitespace-nowrap">
+                            {idx + 1}. {abreviarNombre(est.nombreCompleto)}
+                          </span>
+                        </td>
+
+                        {tiposActivos.flatMap((t) =>
+                          t.categorias.map((cat, catIdx) => {
+                            const selected = selecciones[`${est.id}:${t.id}`] === cat.id
+                            return (
+                              <td
+                                key={cat.id}
+                                className={[
+                                  'border-b border-border px-0.5 py-1 text-center',
+                                  catIdx === 0 ? 'border-l-2 border-l-border' : 'border-l border-l-border/60',
+                                  rowBg,
+                                ].join(' ')}
+                              >
+                                <button
                                   onClick={() => setCategoria(est.id, t.id, cat.id)}
-                                />
-                              ))}
-                            </div>
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                                  className={[
+                                    'mx-auto flex h-6 w-6 items-center justify-center rounded text-[11px] font-bold transition-all duration-100 active:scale-90',
+                                    selected
+                                      ? letterClasses[cat.color]
+                                      : 'text-text-muted hover:bg-surface-alt hover:text-text-secondary',
+                                  ].join(' ')}
+                                  aria-label={`${t.nombre}: ${cat.nombre}`}
+                                >
+                                  {cat.nombre.charAt(0).toUpperCase()}
+                                </button>
+                              </td>
+                            )
+                          }),
+                        )}
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          <p className="flex items-center gap-1.5 text-xs text-text-muted sm:hidden">
+            <ChevronDown className="h-3.5 w-3.5 -rotate-90" />
+            Desliza horizontalmente para ver todas las columnas
+          </p>
+
+          <p className="text-center text-xs font-medium text-primary">
+            Haz clic en la <ChevronDown className="inline h-3 w-3 align-middle" /> para marcar/desmarcar a todos
+          </p>
 
           {/* ===== Save button ===== */}
           <Button
