@@ -25,8 +25,7 @@ export const COLORES_CATEGORIA: { value: ColorCategoria; label: string }[] = [
 export interface Estudiante {
   id: string
   codigo: string
-  nombres: string
-  apellidos: string
+  nombreCompleto: string
   gradoSeccionId: string
   activo: boolean
   fechaCreacion: string
@@ -34,8 +33,7 @@ export interface Estudiante {
 
 export interface EstudianteFormData {
   codigo: string
-  nombres: string
-  apellidos: string
+  nombreCompleto: string
   gradoSeccionId: string
 }
 
@@ -52,8 +50,7 @@ export interface FiltrosEstudiantes {
 
 export interface FilaImportacion {
   rowIndex: number
-  nombres: string
-  apellidos: string
+  nombreCompleto: string
   codigo: string
   grado: string
   seccion: string

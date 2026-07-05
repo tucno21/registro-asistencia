@@ -33,7 +33,7 @@ export interface RegistroAuxiliarDB {
 }
 
 const DB_NAME = 'registroAuxiliarDB'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 let _dbInstance: IDBPDatabase<RegistroAuxiliarDB> | null = null
 
@@ -41,7 +41,7 @@ export async function getDB(): Promise<IDBPDatabase<RegistroAuxiliarDB>> {
   if (_dbInstance) return _dbInstance
 
   _dbInstance = await openDB<RegistroAuxiliarDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion, newVersion, transaction) {
       if (!db.objectStoreNames.contains('usuarios')) {
         const store = db.createObjectStore('usuarios', { keyPath: 'id' })
         store.createIndex('by-username', 'username', { unique: true })
@@ -69,6 +69,11 @@ export async function getDB(): Promise<IDBPDatabase<RegistroAuxiliarDB>> {
         store.createIndex('by-grado-fecha', ['gradoSeccionId', 'fecha'], {
           unique: false,
         })
+      }
+
+      // v2: clear estudiantes (nombres/apellidos → nombreCompleto)
+      if (oldVersion < 2 && db.objectStoreNames.contains('estudiantes')) {
+        transaction.objectStore('estudiantes').clear()
       }
     },
   })

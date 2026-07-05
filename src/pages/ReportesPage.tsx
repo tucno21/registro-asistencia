@@ -151,7 +151,7 @@ const ReportesPage = () => {
     const ws = XLSX.utils.json_to_sheet(rows)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Historial')
-    const filename = `historial_${est.apellidos}_${est.nombres}_${hoy()}.xlsx`
+    const filename = `historial_${est.nombreCompleto.replace(/\s+/g, '_')}_${hoy()}.xlsx`
     XLSX.writeFile(wb, filename)
     toast.show('Historial exportado', 'success')
   }
@@ -188,7 +188,7 @@ const ReportesPage = () => {
 
     const rows = ests.map((est) => {
       const registrosPorFecha = byStudent.get(est.id) ?? new Map()
-      const row = [`${est.apellidos}, ${est.nombres}`]
+      const row = [est.nombreCompleto]
       for (const f of fechas) {
         for (const t of tiposActivos) {
           const regs = registrosPorFecha.get(f) ?? []
@@ -224,8 +224,7 @@ const ReportesPage = () => {
         const g = grados.find((g) => g.id === e.gradoSeccionId)
         return {
           Código: e.codigo,
-          Nombres: e.nombres,
-          Apellidos: e.apellidos,
+          'Nombre Completo': e.nombreCompleto,
           Grado: g?.nombre ?? '',
         }
       })
@@ -238,7 +237,7 @@ const ReportesPage = () => {
         return {
           Fecha: r.fecha,
           Estudiante: est
-            ? `${est.apellidos}, ${est.nombres}`
+            ? est.nombreCompleto
             : r.estudianteId,
           Tipo: tipo?.nombre ?? '',
           Categoría: cat?.nombre ?? '',
@@ -399,7 +398,7 @@ const ReportesPage = () => {
                   <option value="">Seleccionar estudiante</option>
                   {estudiantesActivos.map((e) => (
                     <option key={e.id} value={e.id}>
-                      {e.apellidos}, {e.nombres} — {e.codigo}
+                      {e.nombreCompleto} — {e.codigo}
                     </option>
                   ))}
                 </select>
@@ -652,7 +651,7 @@ const ReportesPage = () => {
                         >
                           <td className="px-3 py-2.5 sticky left-0 bg-surface z-10">
                             <p className="font-medium text-text-primary truncate">
-                              {est.apellidos}, {est.nombres}
+                              {est.nombreCompleto}
                             </p>
                             <p className="text-xs text-text-muted font-mono">
                               {est.codigo}

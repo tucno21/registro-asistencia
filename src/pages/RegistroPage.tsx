@@ -114,7 +114,7 @@ const RegistroPage = () => {
       for (const t of obligatorios) {
         const key = `${est.id}:${t.id}`
         if (!selecciones[key]) {
-          incompletos.push(`${est.nombres} ${est.apellidos} — ${t.nombre}`)
+          incompletos.push(`${est.nombreCompleto} — ${t.nombre}`)
         }
       }
     }
@@ -304,7 +304,7 @@ const RegistroPage = () => {
           <div className="overflow-hidden rounded-card border border-border md:hidden">
             {estudiantesSeccion.map((est, idx) => {
               const completo = isCompleto(est.id)
-              const fullName = `${est.nombres} ${est.apellidos}`
+              const fullName = est.nombreCompleto
               return (
                 <div
                   key={est.id}
@@ -319,7 +319,7 @@ const RegistroPage = () => {
                     <Avatar name={fullName} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-text-primary">
-                        {est.nombres} {est.apellidos}
+                        {est.nombreCompleto}
                       </p>
                       <p className="font-mono text-xs text-text-muted">{est.codigo}</p>
                     </div>
@@ -377,7 +377,7 @@ const RegistroPage = () => {
               <tbody>
                 {estudiantesSeccion.map((est) => {
                   const completo = isCompleto(est.id)
-                  const fullName = `${est.nombres} ${est.apellidos}`
+                  const fullName = est.nombreCompleto
                   return (
                     <tr
                       key={est.id}
@@ -388,7 +388,7 @@ const RegistroPage = () => {
                           <Avatar name={fullName} />
                           <div className="min-w-0">
                             <p className="truncate font-medium text-text-primary">
-                              {est.nombres} {est.apellidos}
+                        {est.nombreCompleto}
                             </p>
                             <p className="font-mono text-xs text-text-muted">{est.codigo}</p>
                           </div>

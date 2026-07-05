@@ -37,8 +37,7 @@ export async function createEstudiante(data: EstudianteFormData): Promise<Estudi
   const estudiante: Estudiante = {
     id: crypto.randomUUID(),
     codigo: data.codigo,
-    nombres: data.nombres,
-    apellidos: data.apellidos,
+    nombreCompleto: data.nombreCompleto,
     gradoSeccionId: data.gradoSeccionId,
     activo: true,
     fechaCreacion: new Date().toISOString(),
@@ -65,8 +64,7 @@ export async function updateEstudiante(
   await store.put({
     ...existing,
     codigo: data.codigo,
-    nombres: data.nombres,
-    apellidos: data.apellidos,
+    nombreCompleto: data.nombreCompleto,
     gradoSeccionId: data.gradoSeccionId,
   })
   await tx.done
@@ -112,8 +110,7 @@ export async function createEstudiantesBatch(
     await store.put({
       id: crypto.randomUUID(),
       codigo: data.codigo,
-      nombres: data.nombres,
-      apellidos: data.apellidos,
+      nombreCompleto: data.nombreCompleto,
       gradoSeccionId: data.gradoSeccionId,
       activo: true,
       fechaCreacion: new Date().toISOString(),

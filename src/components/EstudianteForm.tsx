@@ -14,8 +14,7 @@ interface EstudianteFormProps {
 
 const emptyForm: EstudianteFormData = {
   codigo: '',
-  nombres: '',
-  apellidos: '',
+  nombreCompleto: '',
   gradoSeccionId: '',
 }
 
@@ -39,7 +38,7 @@ const EstudianteForm = ({
     e.preventDefault()
     setError('')
 
-    if (!form.codigo.trim() || !form.nombres.trim() || !form.apellidos.trim() || !form.gradoSeccionId) {
+    if (!form.codigo.trim() || !form.nombreCompleto.trim() || !form.gradoSeccionId) {
       setError('Todos los campos son obligatorios')
       return
     }
@@ -47,8 +46,7 @@ const EstudianteForm = ({
     setSaving(true)
     const result = await onSave({
       codigo: form.codigo.trim(),
-      nombres: form.nombres.trim(),
-      apellidos: form.apellidos.trim(),
+      nombreCompleto: form.nombreCompleto.trim(),
       gradoSeccionId: form.gradoSeccionId,
     })
     setSaving(false)
@@ -89,28 +87,15 @@ const EstudianteForm = ({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="est-nombres" className="text-sm font-medium text-text-secondary">
-              Nombres
+            <label htmlFor="est-nombre" className="text-sm font-medium text-text-secondary">
+              Nombre completo
             </label>
             <input
-              id="est-nombres"
-              value={form.nombres}
-              onChange={(e) => setForm({ ...form, nombres: e.target.value })}
+              id="est-nombre"
+              value={form.nombreCompleto}
+              onChange={(e) => setForm({ ...form, nombreCompleto: e.target.value })}
               className="h-11 w-full rounded-input border border-border bg-surface px-3 text-base text-text-primary placeholder:text-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary hover:border-primary"
-              placeholder="Ej: Juan Carlos"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="est-apellidos" className="text-sm font-medium text-text-secondary">
-              Apellidos
-            </label>
-            <input
-              id="est-apellidos"
-              value={form.apellidos}
-              onChange={(e) => setForm({ ...form, apellidos: e.target.value })}
-              className="h-11 w-full rounded-input border border-border bg-surface px-3 text-base text-text-primary placeholder:text-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary hover:border-primary"
-              placeholder="Ej: Pérez García"
+              placeholder="Ej: Juan Carlos Pérez García"
             />
           </div>
 

@@ -49,11 +49,10 @@ const ExcelImport = ({ open, onClose }: ExcelImportProps) => {
 
   const downloadTemplate = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['Nombres', 'Apellidos', 'Código/DNI', 'Grado', 'Sección'],
+      ['Nombre Completo', 'Código/DNI', 'Grado', 'Sección'],
     ])
     ws['!cols'] = [
-      { wch: 25 },
-      { wch: 25 },
+      { wch: 35 },
       { wch: 15 },
       { wch: 10 },
       { wch: 10 },
@@ -82,8 +81,7 @@ const ExcelImport = ({ open, onClose }: ExcelImportProps) => {
         if (!row || row.length < 3) continue
         const header = row.map((c) => (c ?? '').toString().trim().toLowerCase())
         if (
-          header.some((h) => h.includes('nombres') || h.includes('nombre')) &&
-          header.some((h) => h.includes('apellidos') || h.includes('apellido')) &&
+          header.some((h) => h.includes('nombre')) &&
           header.some((h) => h.includes('código') || h.includes('codigo') || h.includes('dni'))
         ) {
           headerRowIndex = i
@@ -93,7 +91,7 @@ const ExcelImport = ({ open, onClose }: ExcelImportProps) => {
 
       if (headerRowIndex === -1) {
         alert(
-          'No se encontró una fila de encabezados válida. Asegúrate de que el archivo tenga columnas: Nombres, Apellidos, Código/DNI, Grado, Sección.',
+          'No se encontró una fila de encabezados válida. Asegúrate de que el archivo tenga columnas: Nombre Completo, Código/DNI, Grado, Sección.',
         )
         return
       }
@@ -108,17 +106,15 @@ const ExcelImport = ({ open, onClose }: ExcelImportProps) => {
         const values = row.map((c) => (c ?? '').toString().trim())
         if (values.every((v) => !v)) continue
 
-        const nombres = values[0] ?? ''
-        const apellidos = values[1] ?? ''
-        const codigo = values[2] ?? ''
-        const gradoRaw = values[3] ?? ''
-        const seccion = values[4] ?? ''
+        const nombreCompleto = values[0] ?? ''
+        const codigo = values[1] ?? ''
+        const gradoRaw = values[2] ?? ''
+        const seccion = values[3] ?? ''
         const grado = formatGrado(gradoRaw)
 
         const errores: string[] = []
 
-        if (!nombres) errores.push('Nombres vacío')
-        if (!apellidos) errores.push('Apellidos vacío')
+        if (!nombreCompleto) errores.push('Nombre vacío')
         if (!codigo) {
           errores.push('Código/DNI vacío')
         } else if (codigosEnArchivo.has(codigo.toLowerCase())) {
@@ -131,8 +127,7 @@ const ExcelImport = ({ open, onClose }: ExcelImportProps) => {
 
         dataRows.push({
           rowIndex: i + 1,
-          nombres,
-          apellidos,
+          nombreCompleto,
           codigo,
           grado,
           seccion,
@@ -264,8 +259,7 @@ const ExcelImport = ({ open, onClose }: ExcelImportProps) => {
                   <thead>
                     <tr className="bg-surface-alt text-left text-xs font-medium text-text-muted">
                       <th className="px-3 py-2">#</th>
-                      <th className="px-3 py-2">Nombres</th>
-                      <th className="px-3 py-2">Apellidos</th>
+                      <th className="px-3 py-2">Nombre Completo</th>
                       <th className="px-3 py-2">Código</th>
                       <th className="px-3 py-2">Grado</th>
                       <th className="px-3 py-2">Estado</th>
@@ -278,8 +272,7 @@ const ExcelImport = ({ open, onClose }: ExcelImportProps) => {
                         className="border-t border-border"
                       >
                         <td className="px-3 py-2 text-text-muted">{fila.rowIndex}</td>
-                        <td className="px-3 py-2 text-text-primary">{fila.nombres}</td>
-                        <td className="px-3 py-2 text-text-primary">{fila.apellidos}</td>
+                        <td className="px-3 py-2 text-text-primary">{fila.nombreCompleto}</td>
                         <td className="px-3 py-2 text-text-primary">{fila.codigo}</td>
                         <td className="px-3 py-2 text-text-primary">
                           {fila.grado} {fila.seccion}

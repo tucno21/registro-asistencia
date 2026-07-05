@@ -102,7 +102,7 @@ export const useEstudiantesStore = create<EstudiantesState>((set, get) => ({
       if (filtros.gradoSeccionId && e.gradoSeccionId !== filtros.gradoSeccionId) return false
       if (filtros.busqueda) {
         const q = filtros.busqueda.toLowerCase()
-        const nombre = `${e.nombres} ${e.apellidos}`.toLowerCase()
+        const nombre = e.nombreCompleto.toLowerCase()
         const grado = gradoMap.get(e.gradoSeccionId)?.nombre ?? ''
         if (
           !nombre.includes(q) &&
@@ -176,8 +176,7 @@ export const useEstudiantesStore = create<EstudiantesState>((set, get) => ({
     const validas = importPreview.filter((f) => f.valida)
     const data: EstudianteFormData[] = validas.map((f) => ({
       codigo: f.codigo,
-      nombres: f.nombres,
-      apellidos: f.apellidos,
+      nombreCompleto: f.nombreCompleto,
       gradoSeccionId: f.gradoSeccionId!,
     }))
     const result = await createEstudiantesBatch(data)

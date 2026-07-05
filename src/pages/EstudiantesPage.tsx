@@ -189,8 +189,7 @@ const EstudiantesPage = () => {
               <thead>
                 <tr className="bg-surface-alt text-left text-xs font-medium text-text-muted">
                   <th className="px-4 py-3">Código</th>
-                  <th className="px-4 py-3">Nombres</th>
-                  <th className="px-4 py-3">Apellidos</th>
+                  <th className="px-4 py-3">Nombre Completo</th>
                   <th className="px-4 py-3">Grado</th>
                   <th className="px-4 py-3">Estado</th>
                   <th className="px-4 py-3">Acciones</th>
@@ -202,8 +201,7 @@ const EstudiantesPage = () => {
                   return (
                     <tr key={est.id} className="border-t border-border hover:bg-surface-alt/50">
                       <td className="px-4 py-3 font-mono text-xs text-text-secondary">{est.codigo}</td>
-                      <td className="px-4 py-3 font-medium text-text-primary">{est.nombres}</td>
-                      <td className="px-4 py-3 text-text-primary">{est.apellidos}</td>
+                      <td className="px-4 py-3 font-medium text-text-primary">{est.nombreCompleto}</td>
                       <td className="px-4 py-3 text-text-secondary">{grado?.nombre ?? '—'}</td>
                       <td className="px-4 py-3">
                         <Badge variant={est.activo ? 'success' : 'neutral'}>
@@ -247,10 +245,10 @@ const EstudiantesPage = () => {
                 <Card key={est.id} padding="sm">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                      <Avatar name={`${est.nombres} ${est.apellidos}`} />
+                      <Avatar name={est.nombreCompleto} />
                       <div className="min-w-0">
                         <p className="font-medium text-text-primary truncate">
-                          {est.nombres} {est.apellidos}
+                          {est.nombreCompleto}
                         </p>
                         <p className="text-xs text-text-muted mt-0.5">
                           <span className="font-mono">{est.codigo}</span>
@@ -303,8 +301,7 @@ const EstudiantesPage = () => {
           editingStudent
             ? {
                 codigo: editingStudent.codigo,
-                nombres: editingStudent.nombres,
-                apellidos: editingStudent.apellidos,
+                nombreCompleto: editingStudent.nombreCompleto,
                 gradoSeccionId: editingStudent.gradoSeccionId,
               }
             : undefined
