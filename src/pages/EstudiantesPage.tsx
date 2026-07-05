@@ -69,6 +69,18 @@ const EstudiantesPage = () => {
   const gradosActivos = grados.filter((g) => g.activo)
   const gradoMap = new Map(grados.map((g) => [g.id, g]))
 
+  const sorted = [...filtered].sort((a, b) => {
+    const gA = gradoMap.get(a.gradoSeccionId)
+    const gB = gradoMap.get(b.gradoSeccionId)
+    const numA = gA ? parseInt(gA.grado.match(/^(\d+)/)?.[1] ?? '0', 10) : 0
+    const numB = gB ? parseInt(gB.grado.match(/^(\d+)/)?.[1] ?? '0', 10) : 0
+    if (numA !== numB) return numA - numB
+    const secA = gA?.seccion ?? ''
+    const secB = gB?.seccion ?? ''
+    if (secA !== secB) return secA.localeCompare(secB)
+    return a.nombreCompleto.localeCompare(b.nombreCompleto)
+  })
+
   const columns: DataTableColumn<Estudiante>[] = [
     {
       key: 'codigo',
@@ -199,7 +211,7 @@ const EstudiantesPage = () => {
       {/* DataTable */}
       <DataTable<Estudiante>
         columns={columns}
-        data={filtered}
+        data={sorted}
         rowKey={(est) => est.id}
         searchValue={filtros.busqueda}
         onSearchChange={(value) => setFiltros({ busqueda: value })}

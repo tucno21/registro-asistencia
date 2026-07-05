@@ -32,21 +32,53 @@ const EstudianteForm = ({
 
   if (!open) return null
 
-  const gradosActivos = grados.filter((g) => g.activo)
+  const gradosActivos = [...grados.filter((g) => g.activo)].sort((a, b) => {
+    const numA = parseInt(a.grado.match(/^(\d+)/)?.[1] ?? '0', 10)
+    const numB = parseInt(b.grado.match(/^(\d+)/)?.[1] ?? '0', 10)
+    if (numA !== numB) return numA - numB
+    return a.seccion.localeCompare(b.seccion)
+  })
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
 
-    if (!form.codigo.trim() || !form.nombreCompleto.trim() || !form.gradoSeccionId) {
+    const codigo = form.codigo.trim()
+    const nombre = form.nombreCompleto.trim()
+
+    if (!codigo || !nombre || !form.gradoSeccionId) {
       setError('Todos los campos son obligatorios')
+      return
+    }
+
+    if (!/^\d+$/.test(codigo)) {
+      setError('El código / DNI solo debe contener números')
+      return
+    }
+
+    const comaIdx = nombre.indexOf(',')
+    if (comaIdx === -1) {
+      setError('El nombre debe tener el formato: Apellidos, Nombres (separado por coma)')
+      return
+    }
+
+    const apellidos = nombre.slice(0, comaIdx).trim()
+    const nombres = nombre.slice(comaIdx + 1).trim()
+
+    if (!apellidos || apellidos.split(/\s+/).length < 2) {
+      setError('Debe ingresar al menos dos apellidos antes de la coma')
+      return
+    }
+
+    if (!nombres) {
+      setError('Debe ingresar al menos un nombre después de la coma')
       return
     }
 
     setSaving(true)
     const result = await onSave({
-      codigo: form.codigo.trim(),
-      nombreCompleto: form.nombreCompleto.trim(),
+      codigo,
+      nombreCompleto: nombre,
       gradoSeccionId: form.gradoSeccionId,
     })
     setSaving(false)
@@ -72,7 +104,7 @@ const EstudianteForm = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 overflow-y-auto p-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 p-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="est-codigo" className="text-sm font-medium text-text-secondary">
               Código / DNI
@@ -80,22 +112,23 @@ const EstudianteForm = ({
             <input
               id="est-codigo"
               value={form.codigo}
-              onChange={(e) => setForm({ ...form, codigo: e.target.value })}
-              className="h-11 w-full rounded-input border border-border bg-surface px-3 text-base text-text-primary placeholder:text-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary hover:border-primary"
+              onChange={(e) => setForm({ ...form, codigo: e.target.value.replace(/\D/g, '') })}
+              className="h-10 md:h-11 w-full rounded-input border border-border bg-surface px-3 text-base text-text-primary placeholder:text-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary hover:border-primary"
               placeholder="Ej: 12345678"
+              inputMode="numeric"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="est-nombre" className="text-sm font-medium text-text-secondary">
-              Nombre completo
+              Nombre completo (Apellidos, Nombres)
             </label>
             <input
               id="est-nombre"
               value={form.nombreCompleto}
               onChange={(e) => setForm({ ...form, nombreCompleto: e.target.value })}
-              className="h-11 w-full rounded-input border border-border bg-surface px-3 text-base text-text-primary placeholder:text-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary hover:border-primary"
-              placeholder="Ej: Juan Carlos Pérez García"
+              className="h-10 md:h-11 w-full rounded-input border border-border bg-surface px-3 text-base text-text-primary placeholder:text-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary hover:border-primary"
+              placeholder="Apellidos, Nombres (ej: García Pérez, Juan Carlos)"
             />
           </div>
 
@@ -107,7 +140,7 @@ const EstudianteForm = ({
               id="est-grado"
               value={form.gradoSeccionId}
               onChange={(e) => setForm({ ...form, gradoSeccionId: e.target.value })}
-              className="h-11 w-full rounded-input border border-border bg-surface px-3 text-base text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary hover:border-primary"
+              className="h-10 md:h-11 w-full rounded-input border border-border bg-surface px-3 text-base text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary hover:border-primary"
             >
               <option value="">Seleccionar grado</option>
               {gradosActivos.map((g) => (
@@ -122,7 +155,7 @@ const EstudianteForm = ({
             <p className="rounded-md bg-error-bg px-3 py-2 text-sm text-error">{error}</p>
           )}
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-1">
             <Button variant="ghost" type="button" onClick={onClose} className="flex-1">
               Cancelar
             </Button>
