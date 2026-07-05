@@ -49,10 +49,11 @@ const ExcelImport = ({ open, onClose }: ExcelImportProps) => {
 
   const downloadTemplate = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['Nombre Completo', 'Código/DNI', 'Grado', 'Sección'],
+      ['Nombre Completo (Apellidos, Nombres)', 'Código/DNI', 'Grado', 'Sección'],
+      ['García Pérez, Juan Carlos', '12345678', '1ro', 'A'],
     ])
     ws['!cols'] = [
-      { wch: 35 },
+      { wch: 40 },
       { wch: 15 },
       { wch: 10 },
       { wch: 10 },
@@ -114,9 +115,28 @@ const ExcelImport = ({ open, onClose }: ExcelImportProps) => {
 
         const errores: string[] = []
 
-        if (!nombreCompleto) errores.push('Nombre vacío')
+        if (!nombreCompleto) {
+          errores.push('Nombre vacío')
+        } else {
+          const comaIdx = nombreCompleto.indexOf(',')
+          if (comaIdx === -1) {
+            errores.push('Nombre debe tener formato: Apellidos, Nombres (separado por coma)')
+          } else {
+            const apellidos = nombreCompleto.slice(0, comaIdx).trim()
+            const nombres = nombreCompleto.slice(comaIdx + 1).trim()
+            if (!apellidos || apellidos.split(/\s+/).length < 2) {
+              errores.push('Debe tener al menos dos apellidos antes de la coma')
+            }
+            if (!nombres) {
+              errores.push('Debe tener al menos un nombre después de la coma')
+            }
+          }
+        }
+
         if (!codigo) {
           errores.push('Código/DNI vacío')
+        } else if (!/^\d+$/.test(codigo)) {
+          errores.push('Código/DNI solo debe contener números')
         } else if (codigosEnArchivo.has(codigo.toLowerCase())) {
           errores.push('Código/DNI duplicado en el archivo')
         } else {
@@ -281,10 +301,14 @@ const ExcelImport = ({ open, onClose }: ExcelImportProps) => {
                           {fila.valida ? (
                             <CheckCircle className="h-4 w-4 text-success" />
                           ) : (
-                            <span className="flex items-center gap-1 text-xs text-error" title={fila.errores.join(' | ')}>
-                              <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
-                              <span className="truncate max-w-[120px]">{fila.errores[0]}</span>
-                            </span>
+                            <div className="flex flex-col gap-0.5" title={fila.errores.join(' | ')}>
+                              {fila.errores.map((err, j) => (
+                                <span key={j} className="flex items-center gap-1 text-xs text-error">
+                                  <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                                  {err}
+                                </span>
+                              ))}
+                            </div>
                           )}
                         </td>
                       </tr>
