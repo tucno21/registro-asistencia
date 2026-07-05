@@ -19,7 +19,7 @@ const TopBar = ({ title = 'Registro Auxiliar', className = '' }: TopBarProps) =>
     >
       <button
         onClick={toggleSidebar}
-        className="flex h-10 w-10 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-alt md:hidden"
+        className="flex h-10 w-10 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-alt lg:hidden"
         aria-label="Abrir menú"
       >
         <Menu className="h-5 w-5" />

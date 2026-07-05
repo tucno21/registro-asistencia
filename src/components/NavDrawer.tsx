@@ -38,7 +38,7 @@ const NavDrawer = () => {
       if (e.key === 'Escape') setSidebarOpen(false)
     }
     document.addEventListener('keydown', handleEsc)
-    if (window.innerWidth < 768) {
+    if (window.innerWidth < 1024) {
       document.body.style.overflow = 'hidden'
     }
     return () => {
@@ -62,7 +62,7 @@ const NavDrawer = () => {
       {/* Overlay — mobile only */}
       <div
         className={[
-          'fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 md:hidden',
+          'fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 lg:hidden',
           isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
         ].join(' ')}
         onClick={() => setSidebarOpen(false)}
@@ -77,7 +77,7 @@ const NavDrawer = () => {
           'transform transition-transform duration-300 ease-in-out',
           isOpen ? 'translate-x-0' : '-translate-x-full',
           // Desktop: static, always visible
-          'md:static md:z-auto md:translate-x-0 md:transition-none md:shadow-none',
+          'lg:static lg:z-auto lg:translate-x-0 lg:transition-none lg:shadow-none',
         ].join(' ')}
       >
         {/* Header */}
@@ -87,7 +87,7 @@ const NavDrawer = () => {
           </span>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-alt md:hidden"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-alt lg:hidden"
             aria-label="Cerrar menú"
           >
             <X className="h-4 w-4" />
