@@ -192,45 +192,45 @@ const RegistroPage = () => {
   return (
     <div className="flex flex-col gap-4">
       {/* ===== Filter toolbar ===== */}
-      <Card padding="sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+      <div className="rounded-xl border border-border bg-surface p-3 shadow-card md:p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
           <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-text-muted">
+            <label className="mb-1 block text-[10px] font-semibold text-text-secondary md:mb-1.5 md:text-xs">
               Grado y Sección
             </label>
             <div className="relative">
               <select
                 value={selectedGrado}
                 onChange={(e) => setSelectedGrado(e.target.value)}
-                className="h-11 w-full appearance-none rounded-input border border-border bg-surface pl-3 pr-9 text-base text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:border-primary"
+                className="h-10 w-full appearance-none rounded-lg border border-border bg-surface pl-3 pr-9 text-xs font-medium text-text-primary shadow-sm transition-all duration-150 focus-visible:border-primary focus-visible:outline-none hover:border-border/80 hover:shadow md:h-12 md:pl-4 md:pr-10 md:text-sm"
               >
-                <option value="">Seleccionar grado</option>
+                <option value="" className="text-text-muted">Seleccionar grado</option>
                 {gradosFiltrados.map((g) => (
                   <option key={g.id} value={g.id}>
                     {g.nombre}
                   </option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted md:h-4 md:w-4" />
             </div>
           </div>
           <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-text-muted">
+            <label className="mb-1 block text-[10px] font-semibold text-text-secondary md:mb-1.5 md:text-xs">
               Fecha
             </label>
             <div className="relative">
-              <Calendar className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+              <Calendar className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted md:left-3.5 md:h-4 md:w-4" />
               <input
                 type="date"
                 value={selectedDate}
                 max={hoy()}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="h-11 w-full rounded-input border border-border bg-surface pl-9 pr-3 text-base text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:border-primary"
+                className="h-10 w-full rounded-lg border border-border bg-surface pl-9 pr-3 text-xs font-medium text-text-primary shadow-sm transition-all duration-150 focus-visible:border-primary focus-visible:outline-none hover:border-border/80 hover:shadow md:h-12 md:pl-10 md:pr-4 md:text-sm [&::-webkit-calendar-picker-indicator]:opacity-40 [&::-webkit-calendar-picker-indicator]:hover:opacity-100"
               />
             </div>
           </div>
         </div>
-      </Card>
+      </div>
 
       {!selectedGrado ? (
         <EmptyState
