@@ -30,10 +30,12 @@ const GradosSeccionesPage = () => {
 
   const handleSave = async (data: GradoSeccionFormData) => {
     if (editando) {
-      await editarGrado(editando, data)
+      const result = await editarGrado(editando, data)
+      if (!result.ok) throw new Error(result.error)
       setEditando(null)
     } else {
-      await crearGrado(data)
+      const result = await crearGrado(data)
+      if (!result.ok) throw new Error(result.error)
     }
   }
 
@@ -56,6 +58,13 @@ const GradosSeccionesPage = () => {
       </div>
     )
   }
+
+  const sortedGrados = [...grados].sort((a, b) => {
+    const numA = parseInt(unformatGrado(a.grado), 10)
+    const numB = parseInt(unformatGrado(b.grado), 10)
+    if (numA !== numB) return numA - numB
+    return a.seccion.localeCompare(b.seccion)
+  })
 
   return (
     <div className="flex flex-col gap-4">
@@ -83,7 +92,7 @@ const GradosSeccionesPage = () => {
         />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {grados.map((g) => (
+          {sortedGrados.map((g) => (
             <Card key={g.id} padding="sm" className="flex items-center justify-between">
               <div className="flex flex-col gap-0.5">
                 <div className="flex items-center gap-2">
@@ -104,15 +113,13 @@ const GradosSeccionesPage = () => {
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
-                {g.estudianteCount === 0 && (
-                  <button
-                    onClick={() => setDeleteId(g.id)}
-                    className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-error-bg hover:text-error"
-                    aria-label="Eliminar"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
+                <button
+                  onClick={() => setDeleteId(g.id)}
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-error-bg hover:text-error"
+                  aria-label="Eliminar"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
                 <button
                   onClick={() => setToggleId(g.id)}
                   className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-alt"
@@ -159,7 +166,15 @@ const GradosSeccionesPage = () => {
         title="Eliminar grado"
         message={
           deleteId
-            ? `¿Eliminar "${grados.find((g) => g.id === deleteId)?.nombre}"? Esta acción no se puede deshacer.`
+            ? (() => {
+                const g = grados.find((g) => g.id === deleteId)
+                if (!g) return ''
+                const base = `¿Eliminar "${g.nombre}"? Esta acción no se puede deshacer.`
+                if (g.estudianteCount && g.estudianteCount > 0) {
+                  return `${base}\n\n⚠️ Tiene ${g.estudianteCount} estudiante${g.estudianteCount !== 1 ? 's' : ''} asignado${g.estudianteCount !== 1 ? 's' : ''}. Al eliminar el grado, estos estudiantes dejarán de tener grado asignado.`
+                }
+                return base
+              })()
             : ''
         }
         confirmLabel="Eliminar"

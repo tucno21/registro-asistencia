@@ -33,7 +33,7 @@ const ConfirmDialog = ({
           </div>
           <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
         </div>
-        <p className="mb-6 text-sm text-text-secondary">{message}</p>
+        <p className="mb-6 whitespace-pre-line text-sm text-text-secondary">{message}</p>
         <div className="flex gap-3">
           <Button variant="ghost" onClick={onCancel} className="flex-1">
             {cancelLabel}

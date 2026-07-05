@@ -5,6 +5,7 @@ import {
   updateGrado,
   toggleGradoActivo,
   deleteGrado,
+  getGradoByNombre,
 } from '../db/gradosSeccionesRepository'
 import {
   getAllEstudiantes,
@@ -39,8 +40,8 @@ interface EstudiantesState {
   setFiltros: (filtros: Partial<FiltrosEstudiantes>) => void
   estudiantesFiltrados: () => Estudiante[]
 
-  crearGrado: (data: GradoSeccionFormData) => Promise<void>
-  editarGrado: (id: string, data: GradoSeccionFormData) => Promise<void>
+  crearGrado: (data: GradoSeccionFormData) => Promise<{ ok: boolean; error?: string }>
+  editarGrado: (id: string, data: GradoSeccionFormData) => Promise<{ ok: boolean; error?: string }>
   alternarGradoActivo: (id: string) => Promise<void>
   eliminarGrado: (id: string) => Promise<void>
 
@@ -117,13 +118,25 @@ export const useEstudiantesStore = create<EstudiantesState>((set, get) => ({
   },
 
   crearGrado: async (data) => {
+    const nombre = `${data.grado} ${data.seccion}`
+    const existente = await getGradoByNombre(nombre)
+    if (existente) {
+      return { ok: false, error: `Ya existe el grado "${nombre}"` }
+    }
     await createGrado(data)
     await get().loadGrados()
+    return { ok: true }
   },
 
   editarGrado: async (id, data) => {
+    const nombre = `${data.grado} ${data.seccion}`
+    const existente = await getGradoByNombre(nombre)
+    if (existente && existente.id !== id) {
+      return { ok: false, error: `Ya existe el grado "${nombre}"` }
+    }
     await updateGrado(id, data)
     await get().loadGrados()
+    return { ok: true }
   },
 
   alternarGradoActivo: async (id) => {
