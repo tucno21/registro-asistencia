@@ -52,8 +52,8 @@ const GradoSeccionForm = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-center">
-      <div className="flex w-full flex-col rounded-t-xl bg-surface md:mx-4 md:max-w-sm md:rounded-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="flex w-full max-w-sm flex-col rounded-xl bg-surface shadow-xl">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
           <button
