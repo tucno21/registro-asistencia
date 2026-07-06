@@ -167,6 +167,7 @@ const RegistroPage = () => {
             gradoSeccionId: selectedGrado,
             registradoPor: user.id,
             fechaCreacion: now,
+            updatedAt: now,
           })
         }
       }

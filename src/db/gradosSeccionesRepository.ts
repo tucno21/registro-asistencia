@@ -24,12 +24,14 @@ export async function getGradoByNombre(nombre: string): Promise<GradoSeccion | u
 }
 
 export async function createGrado(data: GradoSeccionFormData): Promise<GradoSeccion> {
+  const now = new Date().toISOString()
   const grado: GradoSeccion = {
     id: crypto.randomUUID(),
     grado: data.grado,
     seccion: data.seccion,
     nombre: `${data.grado} ${data.seccion}`,
     activo: true,
+    updatedAt: now,
   }
   const db = await getDB()
   const tx = db.transaction('gradosSecciones', 'readwrite')
@@ -55,6 +57,7 @@ export async function updateGrado(
     grado: data.grado,
     seccion: data.seccion,
     nombre: `${data.grado} ${data.seccion}`,
+    updatedAt: new Date().toISOString(),
   }
   await store.put(updated)
   await tx.done
@@ -69,7 +72,7 @@ export async function toggleGradoActivo(id: string): Promise<void> {
     await tx.done
     throw new Error('Grado/Sección no encontrado')
   }
-  await store.put({ ...existing, activo: !existing.activo })
+  await store.put({ ...existing, activo: !existing.activo, updatedAt: new Date().toISOString() })
   await tx.done
 }
 

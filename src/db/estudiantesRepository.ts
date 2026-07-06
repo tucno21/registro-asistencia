@@ -41,6 +41,7 @@ export async function createEstudiante(data: EstudianteFormData): Promise<Estudi
     gradoSeccionId: data.gradoSeccionId,
     activo: true,
     fechaCreacion: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   }
   const db = await getDB()
   const tx = db.transaction('estudiantes', 'readwrite')
@@ -66,6 +67,7 @@ export async function updateEstudiante(
     codigo: data.codigo,
     nombreCompleto: data.nombreCompleto,
     gradoSeccionId: data.gradoSeccionId,
+    updatedAt: new Date().toISOString(),
   })
   await tx.done
 }
@@ -79,7 +81,7 @@ export async function deactivateEstudiante(id: string): Promise<void> {
     await tx.done
     throw new Error('Estudiante no encontrado')
   }
-  await store.put({ ...existing, activo: !existing.activo })
+  await store.put({ ...existing, activo: !existing.activo, updatedAt: new Date().toISOString() })
   await tx.done
 }
 
@@ -114,6 +116,7 @@ export async function createEstudiantesBatch(
       gradoSeccionId: data.gradoSeccionId,
       activo: true,
       fechaCreacion: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     })
     codigosExistentes.add(data.codigo.toLowerCase())
     count++

@@ -23,6 +23,7 @@
   - `registro` → RegistroPage
   - `reportes` → ReportesPage
   - `respaldo` → RespaldoPage (admin only)
+  - `google-sheets` → GoogleSheetsPage (admin only)
 
 ### Layout (`src/layouts/MainLayout.tsx`)
 ```
@@ -38,10 +39,11 @@ flex h-dvh overflow-hidden
 - Links use `NavLink` from `react-router` with `end` on `/`
 
 ### IndexedDB Schema (`src/db/index.ts`)
-- DB_NAME: `registroAuxiliarDB`, DB_VERSION: 2
+- DB_NAME: `registroAuxiliarDB`, DB_VERSION: 3
 - Stores: `usuarios`, `estudiantes`, `gradosSecciones`, `tiposRegistro`, `registros`
-- Upgrade handler: on v1→v2, clears `estudiantes` store (schema change from `nombres+apellidos` → `nombreCompleto`)
+- Upgrade handler: on v1→v2, clears `estudiantes` store (schema change from `nombres+apellidos` → `nombreCompleto`); on v2→v3, adds `updatedAt` to all syncable stores via cursor iteration
 - `getDB()` singleton — reuse cached instance
+- All syncable entities now have `updatedAt: string` (ISO 8601) for conflict resolution
 
 ### Repositories (`src/db/`)
 - `estudiantesRepository.ts` — CRUD + batch create + duplicate code check
@@ -49,6 +51,7 @@ flex h-dvh overflow-hidden
 - `tiposRegistroRepository.ts` — CRUD
 - `registrosRepository.ts` — queries by fecha/grado/estudiante, upsert
 - `backupRepository.ts` — full JSON export/import
+- `syncRepository.ts` — read/replace/merge for Google Sheets sync (4 syncable stores only, no usuarios)
 
 ### Stores (`src/store/`)
 - `authStore.ts` — login/logout/session restore. `SafeUser` type with `rol: 'admin' | 'docente'`, `gradosAsignados: string[]`. Session persisted in localStorage or sessionStorage.
@@ -56,13 +59,14 @@ flex h-dvh overflow-hidden
 - `tiposRegistroStore.ts` — tipos CRUD
 - `toastStore.ts` — toast notifications (auto-dismiss 3.5s)
 - `uiStore.ts` — sidebar open/close, loading state
+- `syncStore.ts` — Google Sheets sync. Persists `scriptUrl`, `lastSync`, `autoSyncMin` in localStorage. Actions: `setScriptUrl`, `clearScriptUrl`, `syncNow`, `setAutoSyncMin`, `restoreConfig`. Sync flow: read local + remote → merge (last-write-wins on `updatedAt`) → write merged to both. Auto-sync uses `setInterval`.
 
 ### Data Types (`src/types/index.ts`)
-- `Estudiante` — `nombreCompleto` (merged field), `codigo`, `gradoSeccionId`, `activo`
-- `GradoSeccion` — `grado` (e.g. "1ro"), `seccion` (e.g. "A"), `nombre` (computed: "1ro A")
-- `TipoRegistro` — `nombre`, `categorias: CategoriaOpcion[]`, `obligatorio`, `activo`
+- `Estudiante` — `nombreCompleto` (merged field), `codigo`, `gradoSeccionId`, `activo`, `updatedAt`
+- `GradoSeccion` — `grado` (e.g. "1ro"), `seccion` (e.g. "A"), `nombre` (computed: "1ro A"), `updatedAt`
+- `TipoRegistro` — `nombre`, `categorias: CategoriaOpcion[]`, `obligatorio`, `activo`, `updatedAt`
 - `CategoriaOpcion` — `nombre`, `color: ColorCategoria` (success/warning/error/info/neutral)
-- `Registro` — `estudianteId`, `tipoRegistroId`, `categoriaSeleccionada`, `fecha`, `gradoSeccionId`
+- `Registro` — `estudianteId`, `tipoRegistroId`, `categoriaSeleccionada`, `fecha`, `gradoSeccionId`, `updatedAt`
 - `Usuario` — `username`, `passwordHash` (SHA-256), `rol`, `gradosAsignados`
 
 ### Seed Data
@@ -115,6 +119,16 @@ flex h-dvh overflow-hidden
 - `TiposRegistroPage` — CRUD with category colors
 - `ReportesPage` — two tabs: "Por Estudiante" (searchable with dropdown, historial grouped by date with tipo columns) and "Por Sección" (grado + tipo filter, student × date matrix)
 - `RespaldoPage` — JSON/Excel export, JSON import (admin only)
+- `GoogleSheetsPage` — Apps Script URL config, manual sync, auto-sync interval, deploy instructions (admin only)
+
+## Google Sheets Sync Architecture
+- **IndexedDB** is the local source of truth (offline-first)
+- **Google Apps Script** deployed as Web App acts as JSON API (read/write/merge)
+- **`GOOGLE_APPS_SCRIPT.md`** — full Apps Script code to paste in Sheets → Extensions → Apps Script
+- 4 syncable stores: `gradosSecciones`, `estudiantes`, `tiposRegistro`, `registros` (`usuarios` excluded for security)
+- **Sync flow**: read local + remote → merge by ID (last-write-wins on `updatedAt`) → write merged to both
+- Apps Script uses `Content-Type: text/plain` to avoid CORS preflight
+- `categorias` field in `tiposRegistro` stored as JSON string in Sheets cells
 
 ## Common Pitfalls
 - `crypto.subtle` and `crypto.randomUUID()` fail on HTTP → app shows blank screen. Fixed with `basicSsl()` plugin.

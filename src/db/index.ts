@@ -33,7 +33,7 @@ export interface RegistroAuxiliarDB {
 }
 
 const DB_NAME = 'registroAuxiliarDB'
-const DB_VERSION = 2
+const DB_VERSION = 3
 
 let _dbInstance: IDBPDatabase<RegistroAuxiliarDB> | null = null
 
@@ -41,7 +41,7 @@ export async function getDB(): Promise<IDBPDatabase<RegistroAuxiliarDB>> {
   if (_dbInstance) return _dbInstance
 
   _dbInstance = await openDB<RegistroAuxiliarDB>(DB_NAME, DB_VERSION, {
-    upgrade(db, oldVersion, newVersion, transaction) {
+    async upgrade(db, oldVersion, newVersion, transaction) {
       if (!db.objectStoreNames.contains('usuarios')) {
         const store = db.createObjectStore('usuarios', { keyPath: 'id' })
         store.createIndex('by-username', 'username', { unique: true })
@@ -74,6 +74,24 @@ export async function getDB(): Promise<IDBPDatabase<RegistroAuxiliarDB>> {
       // v2: clear estudiantes (nombres/apellidos → nombreCompleto)
       if (oldVersion < 2 && db.objectStoreNames.contains('estudiantes')) {
         transaction.objectStore('estudiantes').clear()
+      }
+
+      // v3: add updatedAt to all syncable stores
+      if (oldVersion < 3) {
+        const now = new Date().toISOString()
+        const syncStores = ['estudiantes', 'gradosSecciones', 'tiposRegistro', 'registros'] as const
+        for (const name of syncStores) {
+          if (!db.objectStoreNames.contains(name)) continue
+          const store = transaction.objectStore(name)
+          let cursor = await store.openCursor()
+          while (cursor) {
+            const record = cursor.value as Record<string, unknown>
+            if (!record.updatedAt) {
+              await cursor.update({ ...record, updatedAt: record.fechaCreacion ?? now })
+            }
+            cursor = await cursor.continue()
+          }
+        }
       }
     },
   })

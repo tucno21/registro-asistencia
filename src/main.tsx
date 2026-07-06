@@ -4,12 +4,14 @@ import { RouterProvider } from 'react-router/dom'
 import { seedUsers } from './db/seed'
 import { seedTiposRegistro } from './db/seedTiposRegistro'
 import { useAuthStore } from './store/authStore'
+import { useSyncStore } from './store/syncStore'
 import router from './router'
 import './index.css'
 
 seedUsers()
 seedTiposRegistro()
 useAuthStore.getState().restoreSession()
+useSyncStore.getState().restoreConfig()
 
 const root = document.getElementById('root')
 if (!root) throw new Error('Root element not found')

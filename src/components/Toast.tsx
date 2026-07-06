@@ -1,16 +1,18 @@
-import { CheckCircle, AlertCircle, AlertTriangle, X } from 'lucide-react'
+import { CheckCircle, AlertCircle, AlertTriangle, Info, X } from 'lucide-react'
 import { useToastStore } from '../store/toastStore'
 
 const icons = {
   success: CheckCircle,
   error: AlertCircle,
   warning: AlertTriangle,
+  info: Info,
 }
 
 const bgClasses = {
   success: 'bg-success text-success-foreground',
   error: 'bg-error text-error-foreground',
   warning: 'bg-warning text-warning-foreground',
+  info: 'bg-info text-info-foreground',
 }
 
 const Toast = () => {

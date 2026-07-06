@@ -8,6 +8,7 @@ import {
   ListChecks,
   BarChart3,
   Shield,
+  Table,
   X,
   LogOut,
   User,
@@ -26,6 +27,7 @@ const adminNav = [
   { to: '/grados-secciones', icon: GraduationCap, label: 'Grados/Secciones' },
   { to: '/tipos-registro', icon: ListChecks, label: 'Tipos de Registro' },
   { to: '/respaldo', icon: Shield, label: 'Respaldo' },
+  { to: '/google-sheets', icon: Table, label: 'Google Sheets' },
 ]
 
 const NavDrawer = () => {

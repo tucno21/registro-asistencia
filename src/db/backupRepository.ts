@@ -78,16 +78,28 @@ export async function importAllData(data: BackupData): Promise<void> {
     })
   }
   for (const e of data.estudiantes) {
-    await tx.objectStore('estudiantes').put(e)
+    await tx.objectStore('estudiantes').put({
+      ...e,
+      updatedAt: e.updatedAt ?? e.fechaCreacion ?? new Date().toISOString(),
+    })
   }
   for (const g of data.gradosSecciones) {
-    await tx.objectStore('gradosSecciones').put(g)
+    await tx.objectStore('gradosSecciones').put({
+      ...g,
+      updatedAt: g.updatedAt ?? new Date().toISOString(),
+    })
   }
   for (const t of data.tiposRegistro) {
-    await tx.objectStore('tiposRegistro').put(t)
+    await tx.objectStore('tiposRegistro').put({
+      ...t,
+      updatedAt: t.updatedAt ?? new Date().toISOString(),
+    })
   }
   for (const r of data.registros) {
-    await tx.objectStore('registros').put(r)
+    await tx.objectStore('registros').put({
+      ...r,
+      updatedAt: r.updatedAt ?? r.fechaCreacion ?? new Date().toISOString(),
+    })
   }
 
   await tx.done

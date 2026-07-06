@@ -10,6 +10,7 @@ import TiposRegistroPage from '../pages/TiposRegistroPage'
 import RegistroPage from '../pages/RegistroPage'
 import ReportesPage from '../pages/ReportesPage'
 import RespaldoPage from '../pages/RespaldoPage'
+import GoogleSheetsPage from '../pages/GoogleSheetsPage'
 
 const router = createBrowserRouter([
   {
@@ -41,6 +42,14 @@ const router = createBrowserRouter([
             element: (
               <RequireRoleRoute roles={['admin']}>
                 <RespaldoPage />
+              </RequireRoleRoute>
+            ),
+          },
+          {
+            path: 'google-sheets',
+            element: (
+              <RequireRoleRoute roles={['admin']}>
+                <GoogleSheetsPage />
               </RequireRoleRoute>
             ),
           },

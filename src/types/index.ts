@@ -29,6 +29,7 @@ export interface Estudiante {
   gradoSeccionId: string
   activo: boolean
   fechaCreacion: string
+  updatedAt: string
 }
 
 export interface EstudianteFormData {
@@ -65,6 +66,7 @@ export interface GradoSeccion {
   seccion: string
   nombre: string
   activo: boolean
+  updatedAt: string
 }
 
 export interface TipoRegistro {
@@ -75,6 +77,7 @@ export interface TipoRegistro {
   activo: boolean
   orden: number
   obligatorio: boolean
+  updatedAt: string
 }
 
 export interface Registro {
@@ -86,6 +89,7 @@ export interface Registro {
   gradoSeccionId: string
   registradoPor: string
   fechaCreacion: string
+  updatedAt: string
 }
 
 export type RolUsuario = 'admin' | 'docente'

@@ -17,6 +17,7 @@ const seedData: Omit<TipoRegistro, 'id'>[] = [
     activo: true,
     orden: 1,
     obligatorio: true,
+    updatedAt: new Date().toISOString(),
   },
   {
     nombre: 'Uniforme',
@@ -28,6 +29,7 @@ const seedData: Omit<TipoRegistro, 'id'>[] = [
     activo: true,
     orden: 2,
     obligatorio: false,
+    updatedAt: new Date().toISOString(),
   },
   {
     nombre: 'Cabello',
@@ -39,6 +41,7 @@ const seedData: Omit<TipoRegistro, 'id'>[] = [
     activo: true,
     orden: 3,
     obligatorio: false,
+    updatedAt: new Date().toISOString(),
   },
 ]
 

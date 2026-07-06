@@ -33,6 +33,7 @@ export async function createTipoRegistro(
     activo: true,
     orden,
     obligatorio: data.obligatorio,
+    updatedAt: new Date().toISOString(),
   }
   await store.put(entity)
   await tx.done
@@ -57,6 +58,7 @@ export async function updateTipoRegistro(
     descripcion: data.descripcion,
     categorias: data.categorias,
     obligatorio: data.obligatorio,
+    updatedAt: new Date().toISOString(),
   })
   await tx.done
 }
@@ -70,7 +72,7 @@ export async function toggleTipoRegistroActivo(id: string): Promise<void> {
     await tx.done
     throw new Error('Tipo de registro no encontrado')
   }
-  await store.put({ ...existing, activo: !existing.activo })
+  await store.put({ ...existing, activo: !existing.activo, updatedAt: new Date().toISOString() })
   await tx.done
 }
 
@@ -86,7 +88,7 @@ export async function reordenarTipoRegistro(
     await tx.done
     throw new Error('Tipo de registro no encontrado')
   }
-  await store.put({ ...existing, orden: nuevoOrden })
+  await store.put({ ...existing, orden: nuevoOrden, updatedAt: new Date().toISOString() })
   await tx.done
 }
 
