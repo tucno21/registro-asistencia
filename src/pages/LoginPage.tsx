@@ -54,8 +54,8 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-primary to-primary-hover px-4">
-      <div className="mb-8 flex flex-col items-center gap-2 text-primary-foreground">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-8 bg-gradient-to-b from-primary to-primary-hover px-4 py-10">
+      <div className="flex flex-col items-center gap-1.5 text-primary-foreground">
         <ClipboardCheck className="h-12 w-12" />
         <h1 className="text-2xl font-bold">Registro Auxiliar</h1>
         <p className="text-sm opacity-80">Control de asistencia escolar</p>
@@ -153,6 +153,10 @@ const LoginPage = () => {
           </Button>
         </form>
       </Card>
+
+      <p className="text-xs text-primary-foreground/60">
+        © {new Date().getFullYear()} Carlos Tucno · DEV
+      </p>
     </div>
   )
 }
