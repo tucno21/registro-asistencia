@@ -18,7 +18,8 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false)
 
   if (isAuthenticated) {
-    navigate('/', { replace: true })
+    const user = useAuthStore.getState().user
+    navigate(user?.rol === 'docente' ? '/registro' : '/', { replace: true })
     return null
   }
 
@@ -36,7 +37,8 @@ const LoginPage = () => {
     setLoading(false)
 
     if (result.success) {
-      navigate('/', { replace: true })
+      const user = useAuthStore.getState().user
+      navigate(user?.rol === 'docente' ? '/registro' : '/', { replace: true })
     } else {
       setError(result.error)
     }

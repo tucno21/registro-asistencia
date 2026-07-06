@@ -12,7 +12,7 @@ const RequireRoleRoute = ({ roles, children }: RequireRoleRouteProps) => {
   const user = useAuthStore((s) => s.user)
 
   if (!user || !roles.includes(user.rol)) {
-    return <Navigate to="/" replace />
+    return <Navigate to={user?.rol === 'docente' ? '/registro' : '/'} replace />
   }
 
   return <>{children}</>
