@@ -26,6 +26,21 @@ interface AuthState {
 }
 
 const SESSION_KEY = 'auth_session'
+const CREDENTIALS_KEY = 'saved_credentials'
+
+export function getSavedCredentials(): { email: string; password: string } | null {
+  try {
+    const raw = localStorage.getItem(CREDENTIALS_KEY)
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+export function clearSavedCredentials(): void {
+  localStorage.removeItem(CREDENTIALS_KEY)
+}
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -57,8 +72,13 @@ export const useAuthStore = create<AuthState>((set) => ({
         gradosAsignados: user.gradosAsignados,
       }
 
-      const storage = remember ? localStorage : sessionStorage
-      storage.setItem(SESSION_KEY, JSON.stringify(safeUser))
+      localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser))
+
+      if (remember) {
+        localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email, password }))
+      } else {
+        localStorage.removeItem(CREDENTIALS_KEY)
+      }
 
       set({ user: safeUser, isAuthenticated: true })
       return { success: true }

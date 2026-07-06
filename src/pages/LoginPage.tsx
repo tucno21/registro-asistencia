@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { ClipboardCheck, Eye, EyeOff } from 'lucide-react'
-import { useAuthStore } from '../store/authStore'
+import { useAuthStore, getSavedCredentials } from '../store/authStore'
 import Button from '../components/Button'
 import Card from '../components/Card'
 
@@ -16,6 +16,15 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const saved = getSavedCredentials()
+    if (saved) {
+      setEmail(saved.email)
+      setPassword(saved.password)
+      setRemember(true)
+    }
+  }, [])
 
   if (isAuthenticated) {
     const user = useAuthStore.getState().user
