@@ -104,3 +104,21 @@ export async function importAllData(data: BackupData): Promise<void> {
 
   await tx.done
 }
+
+export async function clearAllData(): Promise<void> {
+  const db = await getDB()
+  const tx = db.transaction(
+    ['usuarios', 'estudiantes', 'gradosSecciones', 'tiposRegistro', 'registros'],
+    'readwrite',
+  )
+  for (const name of [
+    'usuarios',
+    'estudiantes',
+    'gradosSecciones',
+    'tiposRegistro',
+    'registros',
+  ] as const) {
+    await tx.objectStore(name).clear()
+  }
+  await tx.done
+}

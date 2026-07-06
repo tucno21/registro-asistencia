@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react'
-import { FileDown, FileUp, Download } from 'lucide-react'
+import { FileDown, FileUp, Download, Trash2 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useEstudiantesStore } from '../store/estudiantesStore'
 import { useTiposRegistroStore } from '../store/tiposRegistroStore'
 import { getAllRegistros } from '../db/registrosRepository'
-import { exportAllData, importAllData } from '../db/backupRepository'
+import { exportAllData, importAllData, clearAllData } from '../db/backupRepository'
 import { useToastStore } from '../store/toastStore'
+import { useSyncStore } from '../store/syncStore'
 import Card from '../components/Card'
 import Button from '../components/Button'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -16,11 +17,14 @@ const RespaldoPage = () => {
   const { grados, estudiantes, loadAll } = useEstudiantesStore()
   const { tipos, load: loadTipos } = useTiposRegistroStore()
   const toast = useToastStore()
+  const clearSyncConfig = useSyncStore((s) => s.clearScriptUrl)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [importing, setImporting] = useState(false)
   const [confirmImportOpen, setConfirmImportOpen] = useState(false)
   const [pendingImport, setPendingImport] = useState<File | null>(null)
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false)
+  const [clearing, setClearing] = useState(false)
 
   const estudiantesActivos = estudiantes.filter((e) => e.activo)
   const tiposActivos = tipos.filter((t) => t.activo)
@@ -141,6 +145,19 @@ const RespaldoPage = () => {
     }
   }
 
+  const doClear = async () => {
+    setClearing(true)
+    try {
+      await clearAllData()
+      clearSyncConfig()
+      toast.show('Base de datos limpiada. Recargando...', 'success')
+      setTimeout(() => window.location.reload(), 1000)
+    } catch {
+      toast.show('Error al limpiar la base de datos', 'error')
+      setClearing(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-semibold text-text-primary">Respaldo</h2>
@@ -190,6 +207,25 @@ const RespaldoPage = () => {
         </Button>
       </Card>
 
+      <Card padding="sm" className="border-error/30">
+        <h3 className="mb-3 text-sm font-semibold text-error">
+          Zona de peligro
+        </h3>
+        <p className="mb-4 text-sm text-text-secondary">
+          Elimina todos los datos locales (estudiantes, grados, tipos, registros
+          y usuarios). La app quedara como recien instalada. Esto NO afecta los
+          datos en Google Sheets.
+        </p>
+        <Button
+          variant="danger"
+          onClick={() => setConfirmClearOpen(true)}
+          loading={clearing}
+        >
+          <Trash2 className="h-4 w-4" />
+          Limpiar base de datos
+        </Button>
+      </Card>
+
       <ConfirmDialog
         open={confirmImportOpen}
         title="Importar respaldo"
@@ -203,6 +239,17 @@ const RespaldoPage = () => {
           setPendingImport(null)
           if (fileInputRef.current) fileInputRef.current.value = ''
         }}
+      />
+
+      <ConfirmDialog
+        open={confirmClearOpen}
+        title="Limpiar base de datos"
+        message={'Se eliminaran TODOS los datos locales:\n\n- Usuarios\n- Estudiantes\n- Grados y Secciones\n- Tipos de Registro\n- Registros\n\nLa app quedara como recien instalada. Los datos en Google Sheets NO se afectan.\n\n¿Deseas continuar?'}
+        confirmLabel="Si, limpiar todo"
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={doClear}
+        onCancel={() => setConfirmClearOpen(false)}
       />
     </div>
   )
