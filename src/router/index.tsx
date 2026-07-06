@@ -9,6 +9,7 @@ import GradosSeccionesPage from '../pages/GradosSeccionesPage'
 import TiposRegistroPage from '../pages/TiposRegistroPage'
 import RegistroPage from '../pages/RegistroPage'
 import ReportesPage from '../pages/ReportesPage'
+import RespaldoPage from '../pages/RespaldoPage'
 
 const router = createBrowserRouter([
   {
@@ -35,6 +36,14 @@ const router = createBrowserRouter([
           { path: 'tipos-registro', element: <TiposRegistroPage /> },
           { path: 'registro', element: <RegistroPage /> },
           { path: 'reportes', element: <ReportesPage /> },
+          {
+            path: 'respaldo',
+            element: (
+              <RequireRoleRoute roles={['admin']}>
+                <RespaldoPage />
+              </RequireRoleRoute>
+            ),
+          },
         ],
       },
     ],

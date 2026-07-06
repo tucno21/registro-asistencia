@@ -7,6 +7,7 @@ import {
   GraduationCap,
   ListChecks,
   BarChart3,
+  Shield,
   X,
   LogOut,
   User,
@@ -24,6 +25,7 @@ const mainNav = [
 const adminNav = [
   { to: '/grados-secciones', icon: GraduationCap, label: 'Grados/Secciones' },
   { to: '/tipos-registro', icon: ListChecks, label: 'Tipos de Registro' },
+  { to: '/respaldo', icon: Shield, label: 'Respaldo' },
 ]
 
 const NavDrawer = () => {

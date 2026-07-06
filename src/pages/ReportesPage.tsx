@@ -1,12 +1,9 @@
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import {
-  FileDown,
-  FileUp,
   Download,
   Search,
   History,
   Table2,
-  Shield,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useEstudiantesStore } from '../store/estudiantesStore'
@@ -14,9 +11,7 @@ import { useTiposRegistroStore } from '../store/tiposRegistroStore'
 import {
   getHistorialByEstudiante,
   getHistorialByGradoAndFechas,
-  getAllRegistros,
 } from '../db/registrosRepository'
-import { exportAllData, importAllData } from '../db/backupRepository'
 import { useAuthStore } from '../store/authStore'
 import { useToastStore } from '../store/toastStore'
 import type { Registro } from '../types'
@@ -25,9 +20,8 @@ import Button from '../components/Button'
 import Badge from '../components/Badge'
 import Spinner from '../components/Spinner'
 import EmptyState from '../components/EmptyState'
-import ConfirmDialog from '../components/ConfirmDialog'
 
-type Tab = 'estudiante' | 'seccion' | 'respaldo'
+type Tab = 'estudiante' | 'seccion'
 
 const hoy = () => new Date().toISOString().split('T')[0]
 
@@ -55,12 +49,6 @@ const ReportesPage = () => {
   const [rptFechaFin, setRptFechaFin] = useState(hoy())
   const [matriz, setMatriz] = useState<Registro[]>([])
   const [matrizLoading, setMatrizLoading] = useState(false)
-
-  // --- Tab: Respaldo ---
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [importing, setImporting] = useState(false)
-  const [confirmImportOpen, setConfirmImportOpen] = useState(false)
-  const [pendingImport, setPendingImport] = useState<File | null>(null)
 
   useEffect(() => {
     const init = async () => {
@@ -243,128 +231,6 @@ const ReportesPage = () => {
     toast.show('Matriz exportada', 'success')
   }
 
-  // --- Excel Export: Backup completo (todas las tablas en un solo archivo) ---
-  const exportBackupExcel = async () => {
-    try {
-      const allRegistros = await getAllRegistros()
-      const estRows = estudiantesActivos.map((e) => {
-        const g = grados.find((g) => g.id === e.gradoSeccionId)
-        return {
-          Código: e.codigo,
-          'Nombre Completo': e.nombreCompleto,
-          Grado: g?.nombre ?? '',
-        }
-      })
-      const regRows = allRegistros.map((r) => {
-        const est = estudiantesActivos.find((e) => e.id === r.estudianteId)
-        const tipo = tiposActivos.find((t) => t.id === r.tipoRegistroId)
-        const cat = tipo?.categorias.find(
-          (c) => c.id === r.categoriaSeleccionada,
-        )
-        return {
-          Fecha: r.fecha,
-          Estudiante: est
-            ? est.nombreCompleto
-            : r.estudianteId,
-          Tipo: tipo?.nombre ?? '',
-          Categoría: cat?.nombre ?? '',
-          Grado: r.gradoSeccionId,
-        }
-      })
-
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(
-        wb,
-        XLSX.utils.json_to_sheet(estRows),
-        'Estudiantes',
-      )
-      XLSX.utils.book_append_sheet(
-        wb,
-        XLSX.utils.json_to_sheet(regRows),
-        'Registros',
-      )
-      XLSX.utils.book_append_sheet(
-        wb,
-        XLSX.utils.json_to_sheet(
-          gradosFiltrados.map((g) => ({ Nombre: g.nombre, Activo: g.activo })),
-        ),
-        'Secciones',
-      )
-      XLSX.utils.book_append_sheet(
-        wb,
-        XLSX.utils.json_to_sheet(
-          tiposActivos.map((t) => ({
-            Nombre: t.nombre,
-            Obligatorio: t.obligatorio,
-            Categorías: t.categorias.map((c) => c.nombre).join(', '),
-          })),
-        ),
-        'Tipos de Registro',
-      )
-
-      XLSX.writeFile(wb, `backup_completo_${hoy()}.xlsx`)
-      toast.show('Backup Excel exportado', 'success')
-    } catch {
-      toast.show('Error al exportar backup Excel', 'error')
-    }
-  }
-
-  // --- JSON Backup / Restore ---
-  const handleExportJSON = async () => {
-    try {
-      const blob = await exportAllData()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `respaldo_registros_${hoy()}.json`
-      a.click()
-      URL.revokeObjectURL(url)
-      toast.show('Respaldo JSON descargado', 'success')
-    } catch {
-      toast.show('Error al crear el respaldo', 'error')
-    }
-  }
-
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setPendingImport(file)
-    setConfirmImportOpen(true)
-  }
-
-  const doImport = async () => {
-    if (!pendingImport) return
-    setImporting(true)
-    try {
-      const text = await pendingImport.text()
-      const data = JSON.parse(text)
-
-      // Validate structure
-      if (!data.usuarios || !data.estudiantes || !data.registros) {
-        throw new Error(
-          'Estructura inválida. Asegúrate de usar un archivo de respaldo válido.',
-        )
-      }
-
-      await importAllData(data)
-
-      // Reload stores
-      await Promise.all([loadAll(), loadTipos()])
-
-      toast.show('Datos importados correctamente. Recarga la página.', 'success')
-    } catch (err) {
-      toast.show(
-        err instanceof Error ? err.message : 'Error al importar',
-        'error',
-      )
-    } finally {
-      setImporting(false)
-      setConfirmImportOpen(false)
-      setPendingImport(null)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -376,7 +242,6 @@ const ReportesPage = () => {
   const tabs: { key: Tab; label: string; icon: typeof History }[] = [
     { key: 'estudiante', label: 'Por Estudiante', icon: History },
     { key: 'seccion', label: 'Por Sección', icon: Table2 },
-    { key: 'respaldo', label: 'Respaldo', icon: Shield },
   ]
 
   return (
@@ -733,71 +598,6 @@ const ReportesPage = () => {
           )}
         </div>
       )}
-
-      {/* --- Tab: Respaldo --- */}
-      {tab === 'respaldo' && (
-        <div className="flex flex-col gap-4">
-          <Card padding="sm">
-            <h3 className="mb-3 text-sm font-semibold text-text-primary">
-              Exportar datos
-            </h3>
-            <p className="mb-4 text-sm text-text-secondary">
-              Descarga un archivo JSON con todos los datos del sistema (sin
-              contraseñas) o un archivo Excel con múltiples hojas.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button onClick={handleExportJSON}>
-                <FileDown className="h-4 w-4" />
-                Exportar JSON
-              </Button>
-              <Button variant="ghost" onClick={exportBackupExcel}>
-                <Download className="h-4 w-4" />
-                Exportar Excel completo
-              </Button>
-            </div>
-          </Card>
-
-          <Card padding="sm">
-            <h3 className="mb-3 text-sm font-semibold text-text-primary">
-              Importar datos
-            </h3>
-            <p className="mb-4 text-sm text-text-secondary">
-              Restaura un respaldo JSON. Los datos actuales serán reemplazados
-              por completo.
-            </p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              className="hidden"
-              onChange={handleFileSelected}
-            />
-            <Button
-              variant="secondary"
-              onClick={() => fileInputRef.current?.click()}
-              loading={importing}
-            >
-              <FileUp className="h-4 w-4" />
-              Importar JSON
-            </Button>
-          </Card>
-        </div>
-      )}
-
-      <ConfirmDialog
-        open={confirmImportOpen}
-        title="Importar respaldo"
-        message="Esta acción reemplazará TODOS los datos actuales del sistema. Los usuarios actuales se mantendrán pero sus datos (estudiantes, grados, tipos de registro, registros) serán sobrescritos. ¿Deseas continuar?"
-        confirmLabel="Importar"
-        cancelLabel="Cancelar"
-        variant="danger"
-        onConfirm={doImport}
-        onCancel={() => {
-          setConfirmImportOpen(false)
-          setPendingImport(null)
-          if (fileInputRef.current) fileInputRef.current.value = ''
-        }}
-      />
     </div>
   )
 }
