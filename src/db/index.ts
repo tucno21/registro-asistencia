@@ -41,7 +41,7 @@ export async function getDB(): Promise<IDBPDatabase<RegistroAuxiliarDB>> {
   if (_dbInstance) return _dbInstance
 
   _dbInstance = await openDB<RegistroAuxiliarDB>(DB_NAME, DB_VERSION, {
-    async upgrade(db, oldVersion, newVersion, transaction) {
+    async upgrade(db, oldVersion, _newVersion, transaction) {
       if (!db.objectStoreNames.contains('usuarios')) {
         const store = db.createObjectStore('usuarios', { keyPath: 'id' })
         store.createIndex('by-username', 'username', { unique: true })
