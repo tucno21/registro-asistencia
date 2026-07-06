@@ -71,7 +71,7 @@ const NavDrawer = () => {
       {/* Sidebar — drawer on mobile, static on desktop */}
       <aside
         className={[
-          'flex h-full w-60 flex-shrink-0 flex-col border-r border-border bg-surface',
+          'flex w-60 flex-shrink-0 flex-col border-r border-border bg-surface h-dvh',
           // Mobile: fixed drawer from left
           'fixed left-0 top-0 z-50 shadow-card',
           'transform transition-transform duration-300 ease-in-out',

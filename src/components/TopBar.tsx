@@ -1,13 +1,25 @@
 import { Menu } from 'lucide-react'
+import { useLocation } from 'react-router'
 import { useUIStore } from '../store/uiStore'
+
+const titles: Record<string, string> = {
+  '/': 'Dashboard',
+  '/registro': 'Registro',
+  '/estudiantes': 'Estudiantes',
+  '/reportes': 'Reportes',
+  '/grados-secciones': 'Grados y Secciones',
+  '/tipos-registro': 'Tipos de Registro',
+}
 
 interface TopBarProps {
   title?: string
   className?: string
 }
 
-const TopBar = ({ title = 'Registro Auxiliar', className = '' }: TopBarProps) => {
+const TopBar = ({ className = '' }: TopBarProps) => {
+  const location = useLocation()
   const toggleSidebar = useUIStore((s) => s.toggleSidebar)
+  const title = titles[location.pathname] ?? 'Registro Auxiliar'
 
   return (
     <header
