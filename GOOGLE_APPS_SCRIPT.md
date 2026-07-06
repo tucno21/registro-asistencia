@@ -109,6 +109,12 @@ function readSheet(name) {
         obj[key] = (val === true || val === 'true')
       } else if (key === 'orden') {
         obj[key] = Number(val) || 0
+      } else if (val instanceof Date) {
+        if (key === 'fecha') {
+          obj[key] = Utilities.formatDate(val, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+        } else {
+          obj[key] = val.toISOString()
+        }
       } else {
         obj[key] = val
       }
@@ -128,7 +134,7 @@ function writeSheet(name, records) {
 
   // limpiar datos existentes
   if (sheet.getLastRow() > 1) {
-    sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).clearContent()
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).clearContent().clearFormat()
   }
   // asegurar headers
   if (sheet.getLastRow() === 0) {
@@ -156,7 +162,9 @@ function writeSheet(name, records) {
     data.push(row)
   }
 
-  sheet.getRange(2, 1, data.length, headers.length).setValues(data)
+  var dataRange = sheet.getRange(2, 1, data.length, headers.length)
+  dataRange.setNumberFormat('@')
+  dataRange.setValues(data)
 }
 
 function jsonOut(obj) {

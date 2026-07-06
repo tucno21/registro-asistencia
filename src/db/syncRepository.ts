@@ -46,6 +46,16 @@ export async function replaceLocalSyncData(data: SyncData): Promise<void> {
   await tx.done
 }
 
+export function normalizeRemoteData(data: SyncData): SyncData {
+  return {
+    ...data,
+    registros: data.registros.map((r) => ({
+      ...r,
+      fecha: typeof r.fecha === 'string' ? r.fecha.split('T')[0] : r.fecha,
+    })),
+  }
+}
+
 export function mergeSyncData(local: SyncData, remote: SyncData): SyncData {
   const mergedTipos = mergeArrays(local.tiposRegistro, remote.tiposRegistro)
   const mergedRegistros = mergeArrays(local.registros, remote.registros)

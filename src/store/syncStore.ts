@@ -3,6 +3,7 @@ import {
   getLocalSyncData,
   replaceLocalSyncData,
   mergeSyncData,
+  normalizeRemoteData,
   type SyncData,
 } from '../db/syncRepository'
 
@@ -118,7 +119,8 @@ export const useSyncStore = create<SyncState>((set, get) => ({
     try {
       const local = await getLocalSyncData()
 
-      const remote = await fetchFromSheets(scriptUrl, { action: 'read' })
+      const remoteRaw = await fetchFromSheets(scriptUrl, { action: 'read' })
+      const remote = normalizeRemoteData(remoteRaw)
 
       const merged = mergeSyncData(local, remote)
 
