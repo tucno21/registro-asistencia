@@ -45,6 +45,7 @@ const ReportesPage = () => {
 
   // --- Tab: Por seccion ---
   const [selectedGradoRpt, setSelectedGradoRpt] = useState('')
+  const [selectedTipoRpt, setSelectedTipoRpt] = useState('')
   const [rptFechaInicio, setRptFechaInicio] = useState('')
   const [rptFechaFin, setRptFechaFin] = useState(hoy())
   const [matriz, setMatriz] = useState<Registro[]>([])
@@ -183,62 +184,43 @@ const ReportesPage = () => {
     toast.show('Historial exportado', 'success')
   }
 
-  // --- Excel Export: Matriz por seccion (fechas como columnas, estudiantes como filas) ---
+  // --- Excel Export: Matriz por seccion ---
   const exportMatriz = () => {
-    if (!selectedGradoRpt) return
+    if (!selectedGradoRpt || !selectedTipoRpt) return
     const grado = grados.find((g) => g.id === selectedGradoRpt)
     if (!grado) return
+    const tipo = tiposActivos.find((t) => t.id === selectedTipoRpt)
+    if (!tipo) return
 
     const ests = estudiantes.filter(
       (e) => e.activo && e.gradoSeccionId === selectedGradoRpt,
     )
-
-    // Gather all unique dates
     const fechas = [...new Set(matriz.map((r) => r.fecha))].sort()
 
-    // Group by student
-    const byStudent = new Map<string, Map<string, Registro[]>>()
+    const byStudent = new Map<string, Map<string, string>>()
     for (const r of matriz) {
-      if (!byStudent.has(r.estudianteId))
-        byStudent.set(r.estudianteId, new Map())
-      const byFecha = byStudent.get(r.estudianteId)!
-      if (!byFecha.has(r.fecha)) byFecha.set(r.fecha, [])
-      byFecha.get(r.fecha)!.push(r)
+      if (r.tipoRegistroId !== selectedTipoRpt) continue
+      if (!byStudent.has(r.estudianteId)) byStudent.set(r.estudianteId, new Map())
+      byStudent.get(r.estudianteId)!.set(r.fecha, r.categoriaSeleccionada)
     }
 
-    const header = [
-      'Estudiante',
-      ...fechas.flatMap((f) =>
-        tiposActivos.map((t) => `${f} - ${t.nombre}`),
-      ),
-    ]
-
+    const header = ['Estudiante', ...fechas]
     const rows = ests.map((est) => {
-      const registrosPorFecha = byStudent.get(est.id) ?? new Map()
-      const row = [est.nombreCompleto]
+      const dates = byStudent.get(est.id) ?? new Map()
+      const row: string[] = [est.nombreCompleto]
       for (const f of fechas) {
-        for (const t of tiposActivos) {
-          const regs = registrosPorFecha.get(f) ?? []
-          const match = regs.find((r: Registro) => r.tipoRegistroId === t.id)
-          const cat = match
-            ? t.categorias.find((c) => c.id === match.categoriaSeleccionada)
-            : undefined
-          row.push(cat?.nombre ?? '')
-        }
+        const catId = dates.get(f)
+        const cat = catId ? tipo.categorias.find((c) => c.id === catId) : undefined
+        row.push(cat?.nombre ?? '')
       }
       return row
     })
 
     const ws = XLSX.utils.aoa_to_sheet([header, ...rows])
-    // Column widths
-    ws['!cols'] = [
-      { wch: 30 },
-      ...fechas.flatMap(() => tiposActivos.map(() => ({ wch: 14 }))),
-    ]
-
+    ws['!cols'] = [{ wch: 30 }, ...fechas.map(() => ({ wch: 14 }))]
     const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, `Matriz ${grado.nombre}`)
-    const filename = `matriz_${grado.nombre.replace(/\s+/g, '_')}_${hoy()}.xlsx`
+    XLSX.utils.book_append_sheet(wb, ws, `${tipo.nombre} - ${grado.nombre}`)
+    const filename = `${tipo.nombre.toLowerCase()}_${grado.nombre.replace(/\s+/g, '_')}_${hoy()}.xlsx`
     XLSX.writeFile(wb, filename)
     toast.show('Matriz exportada', 'success')
   }
@@ -473,6 +455,26 @@ const ReportesPage = () => {
               </div>
               <div className="flex-1 flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-text-secondary">
+                  Tipo de Registro
+                </label>
+                <select
+                  value={selectedTipoRpt}
+                  onChange={(e) => {
+                    setSelectedTipoRpt(e.target.value)
+                    setMatriz([])
+                  }}
+                  className="h-11 w-full rounded-input border border-border bg-surface px-3 text-base text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <option value="">Seleccionar tipo</option>
+                  {tiposActivos.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-text-secondary">
                   Desde
                 </label>
                 <input
@@ -499,7 +501,7 @@ const ReportesPage = () => {
               <Button
                 onClick={loadMatriz}
                 loading={matrizLoading}
-                disabled={!selectedGradoRpt || !rptFechaInicio || !rptFechaFin}
+                disabled={!selectedGradoRpt || !selectedTipoRpt || !rptFechaInicio || !rptFechaFin}
                 size="md"
               >
                 <Search className="h-4 w-4" />
@@ -522,11 +524,11 @@ const ReportesPage = () => {
             <div className="flex items-center justify-center py-12">
               <Spinner size={28} />
             </div>
-          ) : !selectedGradoRpt ? (
+          ) : !selectedGradoRpt || !selectedTipoRpt ? (
             <EmptyState
               icon={Table2}
-              title="Selecciona un grado"
-              description="Elige un grado y rango de fechas para ver la matriz."
+              title="Selecciona un grado y tipo"
+              description="Elige un grado, tipo de registro y rango de fechas para ver la matriz."
             />
           ) : matriz.length === 0 ? (
             <EmptyState
@@ -542,45 +544,36 @@ const ReportesPage = () => {
                     <th className="px-3 py-2.5 min-w-[180px] sticky left-0 bg-surface-alt z-10">
                       Estudiante
                     </th>
-                    {tiposActivos.map((t) => (
-                      <th
-                        key={t.id}
-                        className="px-3 py-2.5 text-center min-w-[100px]"
-                      >
-                        {t.nombre}
-                      </th>
-                    ))}
+                    {(() => {
+                      const fechas = [...new Set(matriz.map((r) => r.fecha))].sort()
+                      return fechas.map((f) => (
+                        <th key={f} className="px-3 py-2.5 text-center min-w-[90px]">
+                          {f}
+                        </th>
+                      ))
+                    })()}
                   </tr>
                 </thead>
                 <tbody>
                   {(() => {
                     const ests = estudiantes.filter(
-                      (e) =>
-                        e.activo &&
-                        e.gradoSeccionId === selectedGradoRpt,
+                      (e) => e.activo && e.gradoSeccionId === selectedGradoRpt,
                     )
-                    // Last record per student per tipo
-                    const latestByStudent = new Map<
-                      string,
-                      Map<string, Registro>
-                    >()
+                    const tipo = tiposActivos.find((t) => t.id === selectedTipoRpt)
+                    if (!tipo) return null
+
+                    const fechas = [...new Set(matriz.map((r) => r.fecha))].sort()
+                    const byStudent = new Map<string, Map<string, string>>()
                     for (const r of matriz) {
-                      if (!latestByStudent.has(r.estudianteId))
-                        latestByStudent.set(r.estudianteId, new Map())
-                      const byTipo = latestByStudent.get(r.estudianteId)!
-                      const existing = byTipo.get(r.tipoRegistroId)
-                      if (!existing || r.fecha > existing.fecha) {
-                        byTipo.set(r.tipoRegistroId, r)
-                      }
+                      if (r.tipoRegistroId !== selectedTipoRpt) continue
+                      if (!byStudent.has(r.estudianteId)) byStudent.set(r.estudianteId, new Map())
+                      byStudent.get(r.estudianteId)!.set(r.fecha, r.categoriaSeleccionada)
                     }
 
                     return ests.map((est) => {
-                      const byTipo = latestByStudent.get(est.id) ?? new Map()
+                      const dates = byStudent.get(est.id) ?? new Map()
                       return (
-                        <tr
-                          key={est.id}
-                          className="border-t border-border hover:bg-surface-alt/50"
-                        >
+                        <tr key={est.id} className="border-t border-border hover:bg-surface-alt/50">
                           <td className="px-3 py-2.5 sticky left-0 bg-surface z-10">
                             <p className="font-medium text-text-primary truncate">
                               {est.nombreCompleto}
@@ -589,18 +582,13 @@ const ReportesPage = () => {
                               {est.codigo}
                             </p>
                           </td>
-                          {tiposActivos.map((t) => {
-                            const r = byTipo.get(t.id)
-                            const cat = r
-                              ? t.categorias.find(
-                                  (c) => c.id === r.categoriaSeleccionada,
-                                )
+                          {fechas.map((f) => {
+                            const catId = dates.get(f)
+                            const cat = catId
+                              ? tipo.categorias.find((c) => c.id === catId)
                               : undefined
                             return (
-                              <td
-                                key={t.id}
-                                className="px-3 py-2.5 text-center"
-                              >
+                              <td key={f} className="px-3 py-2.5 text-center">
                                 {cat ? (
                                   <Badge variant={cat.color as any}>
                                     {cat.nombre}
