@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { ClipboardCheck, Eye, EyeOff } from 'lucide-react'
 import { useAuthStore, getSavedCredentials } from '../store/authStore'
+import { useSyncStore } from '../store/syncStore'
 import Button from '../components/Button'
 import Card from '../components/Card'
 
@@ -47,6 +48,10 @@ const LoginPage = () => {
 
     if (result.success) {
       const user = useAuthStore.getState().user
+      if (user?.rol === 'docente' && navigator.onLine) {
+        const { scriptUrl, syncNow } = useSyncStore.getState()
+        if (scriptUrl) syncNow()
+      }
       navigate(user?.rol === 'docente' ? '/registro' : '/', { replace: true })
     } else {
       setError(result.error)
