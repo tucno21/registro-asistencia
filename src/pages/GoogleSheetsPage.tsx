@@ -7,14 +7,18 @@ import {
   Clock,
   AlertCircle,
   CheckCircle,
-  ExternalLink,
   Info,
+  Code2,
+  Copy,
+  Check,
+  X,
 } from 'lucide-react'
 import Card from '../components/Card'
 import Button from '../components/Button'
 import Badge from '../components/Badge'
 import { useSyncStore } from '../store/syncStore'
 import { useToastStore } from '../store/toastStore'
+import { APPS_SCRIPT_CODE } from '../lib/appsScriptCode'
 
 const INTERVAL_OPTIONS = [
   { value: 0, label: 'Desactivado' },
@@ -39,6 +43,8 @@ const GoogleSheetsPage = () => {
   } = useSyncStore()
 
   const [urlInput, setUrlInput] = useState(scriptUrl)
+  const [showCode, setShowCode] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const handleSaveUrl = () => {
     const trimmed = urlInput.trim()
@@ -76,6 +82,17 @@ const GoogleSheetsPage = () => {
       min === 0 ? 'Sincronizacion automatica desactivada' : `Auto-sync cada ${min} min`,
       'info',
     )
+  }
+
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(APPS_SCRIPT_CODE)
+      setCopied(true)
+      toast.show('Codigo copiado al portapapeles', 'success')
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.show('No se pudo copiar. Selecciona y copia manualmente', 'warning')
+    }
   }
 
   const formatLastSync = (iso: string | null) => {
@@ -236,12 +253,23 @@ const GoogleSheetsPage = () => {
                 </a>
               </span>
             </li>
-            <li className="flex gap-2">
-              <span className="font-semibold text-text-primary">2.</span>
-              <span>
-                Ve a <strong>Extensiones &gt; Apps Script</strong> y pega el codigo
-                del archivo <code className="rounded bg-surface-alt px-1">GOOGLE_APPS_SCRIPT.md</code>
+            <li className="flex flex-col gap-2">
+              <span className="flex gap-2">
+                <span className="font-semibold text-text-primary">2.</span>
+                <span>
+                  Ve a <strong>Extensiones &gt; Apps Script</strong> y pega el
+                  codigo del script
+                </span>
               </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowCode(true)}
+                className="ml-5 w-fit"
+              >
+                <Code2 className="h-4 w-4" />
+                Ver codigo
+              </Button>
             </li>
             <li className="flex gap-2">
               <span className="font-semibold text-text-primary">3.</span>
@@ -264,6 +292,58 @@ const GoogleSheetsPage = () => {
           </div>
         </div>
       </Card>
+      {/* Code modal */}
+      {showCode && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setShowCode(false)}
+        >
+          <div
+            className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-surface shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Code2 className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold text-text-primary">
+                  Codigo de Apps Script
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowCode(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-alt hover:text-text-primary"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto bg-surface-alt/50 p-4">
+              <pre className="whitespace-pre-wrap break-words text-xs leading-relaxed text-text-secondary">
+                <code>{APPS_SCRIPT_CODE}</code>
+              </pre>
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-border px-4 py-3">
+              <Button variant="ghost" size="sm" onClick={() => setShowCode(false)}>
+                Cerrar
+              </Button>
+              <Button size="sm" onClick={handleCopyCode}>
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Copiado
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    Copiar codigo
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
