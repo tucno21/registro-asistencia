@@ -1,6 +1,7 @@
-import { Menu } from 'lucide-react'
+import { Menu, Wifi, WifiOff } from 'lucide-react'
 import { useLocation } from 'react-router'
 import { useUIStore } from '../store/uiStore'
+import { useConnectionStore } from '../store/connectionStore'
 
 const titles: Record<string, string> = {
   '/': 'Dashboard',
@@ -9,6 +10,8 @@ const titles: Record<string, string> = {
   '/reportes': 'Reportes',
   '/grados-secciones': 'Grados y Secciones',
   '/tipos-registro': 'Tipos de Registro',
+  '/respaldo': 'Respaldo',
+  '/google-sheets': 'Google Sheets',
 }
 
 interface TopBarProps {
@@ -19,6 +22,7 @@ interface TopBarProps {
 const TopBar = ({ className = '' }: TopBarProps) => {
   const location = useLocation()
   const toggleSidebar = useUIStore((s) => s.toggleSidebar)
+  const online = useConnectionStore((s) => s.online)
   const title = titles[location.pathname] ?? 'Registro Auxiliar'
 
   return (
@@ -37,7 +41,24 @@ const TopBar = ({ className = '' }: TopBarProps) => {
         <Menu className="h-5 w-5" />
       </button>
 
-      <h1 className="text-lg font-semibold text-text-primary">{title}</h1>
+      <h1 className="flex-1 text-lg font-semibold text-text-primary">{title}</h1>
+
+      <div
+        className="flex items-center gap-1.5 text-xs font-medium"
+        title={online ? 'En línea' : 'Sin conexión'}
+      >
+        {online ? (
+          <>
+            <Wifi className="h-4 w-4 text-success" />
+            <span className="hidden text-success sm:inline">En línea</span>
+          </>
+        ) : (
+          <>
+            <WifiOff className="h-4 w-4 text-error" />
+            <span className="hidden text-error sm:inline">Sin conexión</span>
+          </>
+        )}
+      </div>
     </header>
   )
 }
