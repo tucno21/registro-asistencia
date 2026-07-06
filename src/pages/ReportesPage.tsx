@@ -42,6 +42,8 @@ const ReportesPage = () => {
 
   // --- Tab: Por estudiante ---
   const [selectedStudent, setSelectedStudent] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showDropdown, setShowDropdown] = useState(false)
   const [fechaInicio, setFechaInicio] = useState('')
   const [fechaFin, setFechaFin] = useState('')
   const [historial, setHistorial] = useState<Registro[]>([])
@@ -72,13 +74,20 @@ const ReportesPage = () => {
   // Filter grados by role
   const gradosFiltrados = useMemo(
     () =>
-      grados.filter((g) => {
-        if (!g.activo) return false
-        if (user?.rol === 'docente' && user.gradosAsignados.length > 0) {
-          return user.gradosAsignados.includes(g.id)
-        }
-        return true
-      }),
+      grados
+        .filter((g) => {
+          if (!g.activo) return false
+          if (user?.rol === 'docente' && user.gradosAsignados.length > 0) {
+            return user.gradosAsignados.includes(g.id)
+          }
+          return true
+        })
+        .sort((a, b) => {
+          const numA = parseInt(a.grado.match(/^(\d+)/)?.[1] ?? '0', 10)
+          const numB = parseInt(b.grado.match(/^(\d+)/)?.[1] ?? '0', 10)
+          if (numA !== numB) return numA - numB
+          return a.seccion.localeCompare(b.seccion)
+        }),
     [grados, user],
   )
 
@@ -90,6 +99,24 @@ const ReportesPage = () => {
   const tiposActivos = useMemo(
     () => tipos.filter((t) => t.activo),
     [tipos],
+  )
+
+  const searchResults = useMemo(
+    () => {
+      if (!searchQuery.trim()) return estudiantesActivos
+      const q = searchQuery.toLowerCase()
+      return estudiantesActivos.filter(
+        (e) =>
+          e.nombreCompleto.toLowerCase().includes(q) ||
+          e.codigo.toLowerCase().includes(q),
+      )
+    },
+    [searchQuery, estudiantesActivos],
+  )
+
+  const selectedStudentName = useMemo(
+    () => estudiantesActivos.find((e) => e.id === selectedStudent)?.nombreCompleto ?? '',
+    [selectedStudent, estudiantesActivos],
   )
 
   // --- Historial por estudiante ---
@@ -383,25 +410,42 @@ const ReportesPage = () => {
         <div className="flex flex-col gap-4">
           <Card padding="sm">
             <div className="flex flex-col gap-3 sm:flex-row">
-              <div className="flex-1 flex flex-col gap-1.5">
+              <div className="flex-1 flex flex-col gap-1.5 relative">
                 <label className="text-sm font-medium text-text-secondary">
                   Estudiante
                 </label>
-                <select
-                  value={selectedStudent}
+                <input
+                  value={selectedStudent ? selectedStudentName : searchQuery}
                   onChange={(e) => {
-                    setSelectedStudent(e.target.value)
+                    setSearchQuery(e.target.value)
+                    setSelectedStudent('')
                     setHistorial([])
+                    setShowDropdown(true)
                   }}
-                  className="h-11 w-full rounded-input border border-border bg-surface px-3 text-base text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                  <option value="">Seleccionar estudiante</option>
-                  {estudiantesActivos.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.nombreCompleto} — {e.codigo}
-                    </option>
-                  ))}
-                </select>
+                  onFocus={() => setShowDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                  placeholder="Buscar estudiante..."
+                  className="h-11 w-full rounded-input border border-border bg-surface px-3 text-base text-text-primary placeholder:text-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                />
+                {showDropdown && searchQuery.trim() !== '' && searchResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-20 mt-1 max-h-60 overflow-y-auto rounded-card border border-border bg-surface shadow-card">
+                    {searchResults.slice(0, 50).map((e) => (
+                      <button
+                        key={e.id}
+                        type="button"
+                        onMouseDown={() => {
+                          setSelectedStudent(e.id)
+                          setSearchQuery('')
+                          setShowDropdown(false)
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-text-primary hover:bg-surface-alt transition-colors"
+                      >
+                        <span className="flex-1 truncate">{e.nombreCompleto}</span>
+                        <span className="text-xs text-text-muted font-mono">{e.codigo}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
