@@ -153,17 +153,29 @@ const ReportesPage = () => {
     const est = estudiantesActivos.find((e) => e.id === selectedStudent)
     if (!est) return
 
-    const rows = historial.map((r) => {
-      const tipo = tiposActivos.find((t) => t.id === r.tipoRegistroId)
-      const cat = tipo?.categorias.find((c) => c.id === r.categoriaSeleccionada)
-      return {
-        Fecha: r.fecha,
-        'Tipo Registro': tipo?.nombre ?? '',
-        Categoría: cat?.nombre ?? '',
+    const fechas = [...new Set(historial.map((r) => r.fecha))].sort()
+
+    const byFecha = new Map<string, Map<string, string>>()
+    for (const r of historial) {
+      if (!byFecha.has(r.fecha)) byFecha.set(r.fecha, new Map())
+      byFecha.get(r.fecha)!.set(r.tipoRegistroId, r.categoriaSeleccionada)
+    }
+
+    const header = ['Fecha', ...tiposActivos.map((t) => t.nombre)]
+
+    const rows = fechas.map((f) => {
+      const cats = byFecha.get(f) ?? new Map()
+      const row: string[] = [f]
+      for (const t of tiposActivos) {
+        const catId = cats.get(t.id)
+        const cat = catId ? t.categorias.find((c) => c.id === catId) : undefined
+        row.push(cat?.nombre ?? '')
       }
+      return row
     })
 
-    const ws = XLSX.utils.json_to_sheet(rows)
+    const ws = XLSX.utils.aoa_to_sheet([header, ...rows])
+    ws['!cols'] = [{ wch: 14 }, ...tiposActivos.map(() => ({ wch: 18 }))]
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Historial')
     const filename = `historial_${est.nombreCompleto.replace(/\s+/g, '_')}_${hoy()}.xlsx`
@@ -382,40 +394,51 @@ const ReportesPage = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-surface-alt text-left text-xs font-medium text-text-muted">
-                    <th className="px-3 py-2.5">Fecha</th>
-                    <th className="px-3 py-2.5">Tipo</th>
-                    <th className="px-3 py-2.5">Categoría</th>
+                    <th className="px-3 py-2.5 whitespace-nowrap">Fecha</th>
+                    {tiposActivos.map((t) => (
+                      <th key={t.id} className="px-3 py-2.5 text-center whitespace-nowrap min-w-[100px]">
+                        {t.nombre}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {historial.map((r) => {
-                    const tipo = tiposActivos.find(
-                      (t) => t.id === r.tipoRegistroId,
-                    )
-                    const cat = tipo?.categorias.find(
-                      (c) => c.id === r.categoriaSeleccionada,
-                    )
-                    return (
-                      <tr
-                        key={r.id}
-                        className="border-t border-border hover:bg-surface-alt/50"
-                      >
-                        <td className="px-3 py-2.5 font-mono text-text-primary">
-                          {r.fecha}
-                        </td>
-                        <td className="px-3 py-2.5 text-text-primary">
-                          {tipo?.nombre ?? r.tipoRegistroId}
-                        </td>
-                        <td className="px-3 py-2.5">
-                          {cat && (
-                            <Badge variant={cat.color as any}>
-                              {cat.nombre}
-                            </Badge>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
+                  {(() => {
+                    const fechas = [...new Set(historial.map((r) => r.fecha))].sort()
+                    const byFecha = new Map<string, Map<string, string>>()
+                    for (const r of historial) {
+                      if (!byFecha.has(r.fecha)) byFecha.set(r.fecha, new Map())
+                      byFecha.get(r.fecha)!.set(r.tipoRegistroId, r.categoriaSeleccionada)
+                    }
+
+                    return fechas.map((f) => {
+                      const cats = byFecha.get(f) ?? new Map()
+                      return (
+                        <tr key={f} className="border-t border-border hover:bg-surface-alt/50">
+                          <td className="px-3 py-2.5 font-mono text-text-primary whitespace-nowrap">
+                            {f}
+                          </td>
+                          {tiposActivos.map((t) => {
+                            const catId = cats.get(t.id)
+                            const cat = catId
+                              ? t.categorias.find((c) => c.id === catId)
+                              : undefined
+                            return (
+                              <td key={t.id} className="px-3 py-2.5 text-center">
+                                {cat ? (
+                                  <Badge variant={cat.color as any}>
+                                    {cat.nombre}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-text-muted">—</span>
+                                )}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      )
+                    })
+                  })()}
                 </tbody>
               </table>
             </div>
