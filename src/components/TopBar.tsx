@@ -23,7 +23,7 @@ const TopBar = ({ className = '' }: TopBarProps) => {
   const location = useLocation()
   const toggleSidebar = useUIStore((s) => s.toggleSidebar)
   const online = useConnectionStore((s) => s.online)
-  const title = titles[location.pathname] ?? 'Registro Auxiliar'
+  const title = titles[location.pathname] ?? 'Registro Escolar'
 
   return (
     <header

@@ -16,8 +16,8 @@ export default defineConfig({
         enabled: true,
       },
       manifest: {
-        name: 'Registro Auxiliar',
-        short_name: 'Registro',
+        name: 'Registro Escolar',
+        short_name: 'Registro Escolar',
         description: 'Sistema de control de asistencia escolar',
         theme_color: '#2563EB',
         background_color: '#ffffff',

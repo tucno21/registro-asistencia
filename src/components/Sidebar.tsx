@@ -59,7 +59,7 @@ const Sidebar = ({ className = '' }: SidebarProps) => {
       >
         <div className="flex h-14 items-center justify-between border-b border-border px-4">
           <span className="text-base font-semibold text-text-primary">
-            Registro Auxiliar
+            Registro Escolar
           </span>
           <button
             onClick={() => setSidebarOpen(false)}

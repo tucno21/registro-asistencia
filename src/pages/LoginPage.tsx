@@ -62,7 +62,7 @@ const LoginPage = () => {
     <div className="flex min-h-dvh flex-col items-center justify-center gap-8 bg-gradient-to-b from-primary to-primary-hover px-4 py-10">
       <div className="flex flex-col items-center gap-1.5 text-primary-foreground">
         <ClipboardCheck className="h-12 w-12" />
-        <h1 className="text-2xl font-bold">Registro Auxiliar</h1>
+        <h1 className="text-2xl font-bold">Registro Escolar</h1>
         <p className="text-sm opacity-80">Control de asistencia escolar</p>
       </div>
 
