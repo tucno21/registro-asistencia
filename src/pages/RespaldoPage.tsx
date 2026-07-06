@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { FileDown, FileUp, Download, Trash2 } from 'lucide-react'
+import { FileDown, FileUp, Download, Trash2, RefreshCw } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useEstudiantesStore } from '../store/estudiantesStore'
 import { useTiposRegistroStore } from '../store/tiposRegistroStore'
@@ -25,6 +25,7 @@ const RespaldoPage = () => {
   const [pendingImport, setPendingImport] = useState<File | null>(null)
   const [confirmClearOpen, setConfirmClearOpen] = useState(false)
   const [clearing, setClearing] = useState(false)
+  const [updating, setUpdating] = useState(false)
 
   const estudiantesActivos = estudiantes.filter((e) => e.activo)
   const tiposActivos = tipos.filter((t) => t.activo)
@@ -158,6 +159,25 @@ const RespaldoPage = () => {
     }
   }
 
+  const doUpdateApp = async () => {
+    setUpdating(true)
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys()
+        await Promise.all(keys.map((key) => caches.delete(key)))
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations()
+        await Promise.all(regs.map((reg) => reg.unregister()))
+      }
+      toast.show('Actualizando aplicacion...', 'success')
+      setTimeout(() => window.location.reload(), 1000)
+    } catch {
+      toast.show('Error al actualizar la aplicacion', 'error')
+      setUpdating(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-semibold text-text-primary">Respaldo</h2>
@@ -204,6 +224,24 @@ const RespaldoPage = () => {
         >
           <FileUp className="h-4 w-4" />
           Importar JSON
+        </Button>
+      </Card>
+
+      <Card padding="sm">
+        <h3 className="mb-3 text-sm font-semibold text-text-primary">
+          Actualizar aplicacion
+        </h3>
+        <p className="mb-4 text-sm text-text-secondary">
+          Elimina los archivos en cache (JS, CSS, etc.) y descarga la version
+          mas reciente. Los datos locales NO se eliminan.
+        </p>
+        <Button
+          variant="secondary"
+          onClick={doUpdateApp}
+          loading={updating}
+        >
+          <RefreshCw className="h-4 w-4" />
+          Buscar actualizaciones
         </Button>
       </Card>
 
