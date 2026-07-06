@@ -160,7 +160,7 @@ const LoginPage = () => {
       </Card>
 
       <p className="text-xs text-primary-foreground/60">
-        © {new Date().getFullYear()} Carlos Tucno · DEV
+        © {new Date().getFullYear()} DEV · Carlos Tucno
       </p>
     </div>
   )
