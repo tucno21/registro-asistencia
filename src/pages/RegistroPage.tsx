@@ -191,9 +191,9 @@ const RegistroPage = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {/* ===== Filter toolbar ===== */}
-      <div className="rounded-xl border border-border bg-surface p-3 shadow-card md:p-5">
+      <div className="rounded-xl border border-border bg-surface px-3 py-2 shadow-card md:p-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
           <div className="flex-1">
             <label className="mb-1 block text-[10px] font-semibold text-text-secondary md:mb-1.5 md:text-xs">
@@ -203,7 +203,7 @@ const RegistroPage = () => {
               <select
                 value={selectedGrado}
                 onChange={(e) => setSelectedGrado(e.target.value)}
-                className="h-10 w-full appearance-none rounded-lg border border-border bg-surface pl-3 pr-9 text-xs font-medium text-text-primary shadow-sm transition-all duration-150 focus-visible:border-primary focus-visible:outline-none hover:border-border/80 hover:shadow md:h-12 md:pl-4 md:pr-10 md:text-sm"
+                className="h-10 w-full appearance-none rounded-lg border border-border bg-surface pl-3 pr-9 text-xs font-medium text-text-primary shadow-sm transition-all duration-150 focus-visible:border-primary focus-visible:outline-none hover:border-border/80 hover:shadow"
               >
                 <option value="" className="text-text-muted">Seleccionar grado</option>
                 {gradosFiltrados.map((g) => (
@@ -226,7 +226,7 @@ const RegistroPage = () => {
                 value={selectedDate}
                 max={hoy()}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="h-10 w-full rounded-lg border border-border bg-surface pl-9 pr-3 text-xs font-medium text-text-primary shadow-sm transition-all duration-150 focus-visible:border-primary focus-visible:outline-none hover:border-border/80 hover:shadow md:h-12 md:pl-10 md:pr-4 md:text-sm [&::-webkit-calendar-picker-indicator]:opacity-40 [&::-webkit-calendar-picker-indicator]:hover:opacity-100"
+                className="h-10 w-full rounded-lg border border-border bg-surface pl-9 pr-3 text-xs font-medium text-text-primary shadow-sm transition-all duration-150 focus-visible:border-primary focus-visible:outline-none hover:border-border/80 hover:shadow [&::-webkit-calendar-picker-indicator]:opacity-40 [&::-webkit-calendar-picker-indicator]:hover:opacity-100"
               />
             </div>
           </div>
@@ -264,7 +264,7 @@ const RegistroPage = () => {
                       rowSpan={2}
                       className="sticky left-0 top-0 z-30 min-w-[110px] border-b border-r border-border bg-surface-alt px-2 py-1.5 text-left text-xs font-semibold text-text-secondary"
                     >
-                      #
+                      Estudiantes
                     </th>
                     {tiposActivos.map((t) => (
                       <th
