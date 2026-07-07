@@ -43,6 +43,12 @@ const letterClasses: Record<ColorCategoria, string> = {
   neutral: 'bg-slate-500 text-white',
 }
 
+// Clase de borde para el separador entre grupos de categorías (tipos de registro).
+// Se mantiene el mismo grosor (border-l, 1px) que las columnas internas, pero con
+// un color mucho más oscuro/contrastado para que el grupo se distinga claramente.
+const GROUP_SEPARATOR = 'border-l border-l-slate-400 dark:border-l-slate-400'
+const INNER_SEPARATOR = 'border-l border-l-border/50'
+
 const RegistroPage = () => {
   const user = useAuthStore((s) => s.user)
   const { grados, estudiantes, loadAll } = useEstudiantesStore()
@@ -262,15 +268,18 @@ const RegistroPage = () => {
                   <tr>
                     <th
                       rowSpan={2}
-                      className="sticky left-0 top-0 z-30 min-w-[110px] border-b border-r border-border bg-surface-alt px-2 py-1.5 text-left text-xs font-semibold text-text-secondary"
+                      className="sticky left-0 top-0 z-30 min-w-[110px] border-b border-border bg-surface-alt px-2 py-1.5 text-left text-xs font-semibold text-text-secondary "
                     >
                       Estudiantes
                     </th>
-                    {tiposActivos.map((t) => (
+                    {tiposActivos.map((t, tIdx) => (
                       <th
                         key={t.id}
                         colSpan={t.categorias.length}
-                        className="sticky top-0 z-20 border-b border-border bg-surface-alt px-1 py-1 text-center text-[10px] font-semibold uppercase tracking-wider text-text-muted"
+                        className={[
+                          'sticky top-0 z-20 border-b border-border bg-surface-alt px-1 py-1 text-center text-[10px] font-semibold uppercase tracking-wider text-text-muted',
+                          tIdx > 0 ? GROUP_SEPARATOR : '',
+                        ].join(' ')}
                       >
                         {t.nombre}
                       </th>
@@ -283,7 +292,7 @@ const RegistroPage = () => {
                           key={cat.id}
                           className={[
                             'sticky top-[22px] z-20 min-w-[30px] border-b border-border bg-surface-alt px-0.5 py-1 text-center align-bottom',
-                            catIdx === 0 ? 'border-l-2 border-l-border' : 'border-l border-l-border/60',
+                            catIdx === 0 ? GROUP_SEPARATOR : INNER_SEPARATOR,
                           ].join(' ')}
                         >
                           <div className="flex flex-col items-center gap-px">
@@ -310,7 +319,7 @@ const RegistroPage = () => {
                       <tr key={est.id}>
                         <td
                           className={[
-                            'sticky left-0 z-10 border-b border-r border-border px-2 py-1',
+                            'sticky left-0 z-10 border-b border-border px-2 py-1',
                             rowBg,
                           ].join(' ')}
                         >
@@ -327,7 +336,7 @@ const RegistroPage = () => {
                                 key={cat.id}
                                 className={[
                                   'border-b border-border px-0.5 py-1 text-center',
-                                  catIdx === 0 ? 'border-l-2 border-l-border' : 'border-l border-l-border/60',
+                                  catIdx === 0 ? GROUP_SEPARATOR : INNER_SEPARATOR,
                                   rowBg,
                                 ].join(' ')}
                               >
