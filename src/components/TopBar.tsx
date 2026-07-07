@@ -28,7 +28,7 @@ const TopBar = ({ className = '' }: TopBarProps) => {
   return (
     <header
       className={[
-        'sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-surface/95 px-4 backdrop-blur-sm',
+        'sticky top-0 z-30 flex h-12 items-center gap-3 border-b border-border bg-surface/95 px-4 backdrop-blur-sm',
         'shadow-topbar',
         className,
       ].join(' ')}

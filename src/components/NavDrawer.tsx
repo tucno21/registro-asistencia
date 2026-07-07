@@ -85,7 +85,7 @@ const NavDrawer = () => {
         ].join(' ')}
       >
         {/* Header */}
-        <div className="flex h-14 flex-shrink-0 items-center justify-between border-b border-border px-4">
+        <div className="flex h-12 flex-shrink-0 items-center justify-between border-b border-border px-4">
           <span className="text-base font-semibold text-text-primary">
             Registro Escolar
           </span>
