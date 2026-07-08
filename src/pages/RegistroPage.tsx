@@ -8,7 +8,7 @@ import {
 import { useAuthStore } from '../store/authStore'
 import { useEstudiantesStore } from '../store/estudiantesStore'
 import { useTiposRegistroStore } from '../store/tiposRegistroStore'
-import { getRegistrosByFechaAndGrado, upsertRegistros } from '../db/registrosRepository'
+import { getRegistrosByFechaAndGrado, upsertRegistros, deleteRegistros } from '../db/registrosRepository'
 import { useToastStore } from '../store/toastStore'
 import type { Registro, ColorCategoria } from '../types'
 import Card from '../components/Card'
@@ -161,6 +161,15 @@ const RegistroPage = () => {
     if (!selectedGrado || !user) return
     setSaving(true)
     try {
+      const existentes = await getRegistrosByFechaAndGrado(selectedDate, selectedGrado)
+      const toDelete: string[] = []
+      for (const r of existentes) {
+        const key = `${r.estudianteId}:${r.tipoRegistroId}`
+        if (!selecciones[key]) {
+          toDelete.push(r.id)
+        }
+      }
+
       const registros: Registro[] = []
       const now = new Date().toISOString()
 
@@ -170,31 +179,42 @@ const RegistroPage = () => {
           const catId = selecciones[key]
           if (!catId) continue
 
+          const prev = existentes.find(
+            (r) => r.estudianteId === est.id && r.tipoRegistroId === t.id,
+          )
+
           registros.push({
-            id: crypto.randomUUID(),
+            id: prev?.id ?? crypto.randomUUID(),
             estudianteId: est.id,
             tipoRegistroId: t.id,
             categoriaSeleccionada: catId,
             fecha: selectedDate,
             gradoSeccionId: selectedGrado,
             registradoPor: user.id,
-            fechaCreacion: now,
+            fechaCreacion: prev?.fechaCreacion ?? now,
             updatedAt: now,
           })
         }
       }
 
-      if (registros.length === 0) {
-        toast.show('No hay registros para guardar', 'warning')
-        return
+      if (toDelete.length > 0) {
+        await deleteRegistros(toDelete)
       }
 
-      await upsertRegistros(registros)
+      if (registros.length > 0) {
+        await upsertRegistros(registros)
+      }
+
       await loadExisting()
-      toast.show(
-        `Registro guardado (${registros.length} marca${registros.length !== 1 ? 's' : ''})`,
-        'success',
-      )
+      const total = registros.length
+      if (total === 0 && toDelete.length === 0) {
+        toast.show('No hay registros para guardar', 'warning')
+      } else {
+        toast.show(
+          `Registro guardado (${total} marca${total !== 1 ? 's' : ''})`,
+          'success',
+        )
+      }
     } catch {
       toast.show('Error al guardar el registro', 'error')
     } finally {

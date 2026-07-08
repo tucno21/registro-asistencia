@@ -70,6 +70,16 @@ export async function getRegistrosByFecha(fecha: string): Promise<Registro[]> {
   return result
 }
 
+export async function deleteRegistros(ids: string[]): Promise<void> {
+  const db = await getDB()
+  const tx = db.transaction('registros', 'readwrite')
+  const store = tx.objectStore('registros')
+  for (const id of ids) {
+    await store.delete(id)
+  }
+  await tx.done
+}
+
 export async function getAllRegistros(): Promise<Registro[]> {
   const db = await getDB()
   const tx = db.transaction('registros', 'readonly')
