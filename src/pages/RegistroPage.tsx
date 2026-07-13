@@ -90,9 +90,13 @@ const RegistroPage = () => {
       return a.seccion.localeCompare(b.seccion)
     })
 
-  const estudiantesSeccion = estudiantes.filter(
-    (e) => e.activo && e.gradoSeccionId === selectedGrado,
-  )
+  const estudiantesSeccion = estudiantes
+    .filter((e) => e.activo && e.gradoSeccionId === selectedGrado)
+    .sort((a, b) => {
+      const apA = a.nombreCompleto.split(',')[0]?.trim().toLowerCase() ?? ''
+      const apB = b.nombreCompleto.split(',')[0]?.trim().toLowerCase() ?? ''
+      return apA.localeCompare(apB)
+    })
 
   const tiposActivos = tipos.filter((t) => t.activo)
   const obligatorios = tiposActivos.filter((t) => t.obligatorio)

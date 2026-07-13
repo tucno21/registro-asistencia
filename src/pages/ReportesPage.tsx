@@ -192,9 +192,13 @@ const ReportesPage = () => {
     const tipo = tiposActivos.find((t) => t.id === selectedTipoRpt)
     if (!tipo) return
 
-    const ests = estudiantes.filter(
-      (e) => e.activo && e.gradoSeccionId === selectedGradoRpt,
-    )
+    const ests = estudiantes
+      .filter((e) => e.activo && e.gradoSeccionId === selectedGradoRpt)
+      .sort((a, b) => {
+        const apA = a.nombreCompleto.split(',')[0]?.trim().toLowerCase() ?? ''
+        const apB = b.nombreCompleto.split(',')[0]?.trim().toLowerCase() ?? ''
+        return apA.localeCompare(apB)
+      })
     const fechas = [...new Set(matriz.map((r) => r.fecha))].sort()
 
     const byStudent = new Map<string, Map<string, string>>()
@@ -556,9 +560,13 @@ const ReportesPage = () => {
                 </thead>
                 <tbody>
                   {(() => {
-                    const ests = estudiantes.filter(
-                      (e) => e.activo && e.gradoSeccionId === selectedGradoRpt,
-                    )
+                    const ests = estudiantes
+                      .filter((e) => e.activo && e.gradoSeccionId === selectedGradoRpt)
+                      .sort((a, b) => {
+                        const apA = a.nombreCompleto.split(',')[0]?.trim().toLowerCase() ?? ''
+                        const apB = b.nombreCompleto.split(',')[0]?.trim().toLowerCase() ?? ''
+                        return apA.localeCompare(apB)
+                      })
                     const tipo = tiposActivos.find((t) => t.id === selectedTipoRpt)
                     if (!tipo) return null
 
