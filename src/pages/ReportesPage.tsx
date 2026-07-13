@@ -4,8 +4,14 @@ import {
   Search,
   History,
   Table2,
+  PieChart as PieChartIcon,
+  BarChart3,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import {
+  PieChart, Pie, Cell, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts'
 import { useEstudiantesStore } from '../store/estudiantesStore'
 import { useTiposRegistroStore } from '../store/tiposRegistroStore'
 import {
@@ -14,7 +20,7 @@ import {
 } from '../db/registrosRepository'
 import { useAuthStore } from '../store/authStore'
 import { useToastStore } from '../store/toastStore'
-import type { Registro } from '../types'
+import type { Registro, ColorCategoria } from '../types'
 import Card from '../components/Card'
 import Button from '../components/Button'
 import Badge from '../components/Badge'
@@ -24,6 +30,39 @@ import EmptyState from '../components/EmptyState'
 type Tab = 'estudiante' | 'seccion'
 
 const hoy = () => new Date().toISOString().split('T')[0]
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
+
+function abreviarNombre(nombreCompleto: string): string {
+  const [apellidosPart, nombresPart] = nombreCompleto.split(',').map(s => s.trim())
+  if (!nombresPart) {
+    const palabras = nombreCompleto.trim().split(/\s+/)
+    if (palabras.length < 2) return nombreCompleto
+    return `${cap(palabras[palabras.length - 1])}, ${cap(palabras[0])}`
+  }
+  const primerApellido = apellidosPart.split(/\s+/)[0] ?? ''
+  const primerNombre = nombresPart.split(/\s+/)[0] ?? ''
+  return `${cap(primerApellido)}, ${cap(primerNombre)}`
+}
+
+const donutLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.6
+  const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180))
+  const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180))
+  return (
+    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={700}>
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  )
+}
+
+const CATEGORY_HEX: Record<ColorCategoria, string> = {
+  success: '#22c55e',
+  warning: '#f59e0b',
+  error: '#ef4444',
+  info: '#3b82f6',
+  neutral: '#64748b',
+}
 
 const ReportesPage = () => {
   const user = useAuthStore((s) => s.user)
@@ -42,6 +81,9 @@ const ReportesPage = () => {
   const [fechaFin, setFechaFin] = useState('')
   const [historial, setHistorial] = useState<Registro[]>([])
   const [historialLoading, setHistorialLoading] = useState(false)
+
+  // --- Chart state ---
+  const [chartTipo, setChartTipo] = useState('')
 
   // --- Tab: Por seccion ---
   const [selectedGradoRpt, setSelectedGradoRpt] = useState('')
@@ -107,6 +149,78 @@ const ReportesPage = () => {
     () => estudiantesActivos.find((e) => e.id === selectedStudent)?.nombreCompleto ?? '',
     [selectedStudent, estudiantesActivos],
   )
+
+  // --- Chart data: Por Estudiante ---
+  const estudianteDonutData = useMemo(() => {
+    if (!chartTipo || historial.length === 0) return []
+    const tipo = tiposActivos.find((t) => t.id === chartTipo)
+    if (!tipo) return []
+
+    const counts = new Map<string, number>()
+    for (const r of historial) {
+      if (r.tipoRegistroId !== chartTipo) continue
+      counts.set(r.categoriaSeleccionada, (counts.get(r.categoriaSeleccionada) ?? 0) + 1)
+    }
+
+    return tipo.categorias
+      .map((cat) => ({
+        name: cat.nombre,
+        value: counts.get(cat.id) ?? 0,
+        color: CATEGORY_HEX[cat.color],
+      }))
+      .filter((d) => d.value > 0)
+  }, [chartTipo, historial, tiposActivos])
+
+  // --- Chart data: Por Seccion ---
+  const seccionDonutData = useMemo(() => {
+    if (matriz.length === 0 || !selectedTipoRpt) return []
+    const tipo = tiposActivos.find((t) => t.id === selectedTipoRpt)
+    if (!tipo) return []
+
+    const counts = new Map<string, number>()
+    for (const r of matriz) {
+      counts.set(r.categoriaSeleccionada, (counts.get(r.categoriaSeleccionada) ?? 0) + 1)
+    }
+
+    return tipo.categorias
+      .map((cat) => ({
+        name: cat.nombre,
+        value: counts.get(cat.id) ?? 0,
+        color: CATEGORY_HEX[cat.color],
+      }))
+      .filter((d) => d.value > 0)
+  }, [matriz, selectedTipoRpt, tiposActivos])
+
+  const seccionBarData = useMemo(() => {
+    if (matriz.length === 0 || !selectedTipoRpt || !selectedGradoRpt) return []
+    const tipo = tiposActivos.find((t) => t.id === selectedTipoRpt)
+    if (!tipo) return []
+
+    const ests = estudiantes
+      .filter((e) => e.activo && e.gradoSeccionId === selectedGradoRpt)
+      .sort((a, b) => {
+        const apA = a.nombreCompleto.split(',')[0]?.trim().toLowerCase() ?? ''
+        const apB = b.nombreCompleto.split(',')[0]?.trim().toLowerCase() ?? ''
+        return apA.localeCompare(apB)
+      })
+
+    const byStudent = new Map<string, Map<string, number>>()
+    for (const r of matriz) {
+      if (!byStudent.has(r.estudianteId)) byStudent.set(r.estudianteId, new Map())
+      const catCount = byStudent.get(r.estudianteId)!
+      catCount.set(r.categoriaSeleccionada, (catCount.get(r.categoriaSeleccionada) ?? 0) + 1)
+    }
+
+    return ests.map((est) => {
+      const cats = byStudent.get(est.id) ?? new Map()
+      const apellido = est.nombreCompleto.split(',')[0] ?? est.nombreCompleto
+      const row: Record<string, string | number> = { nombre: apellido }
+      for (const cat of tipo.categorias) {
+        row[cat.nombre] = cats.get(cat.id) ?? 0
+      }
+      return row
+    })
+  }, [matriz, selectedTipoRpt, selectedGradoRpt, estudiantes, tiposActivos])
 
   // --- Historial por estudiante ---
   const loadHistorial = async () => {
@@ -255,11 +369,10 @@ const ReportesPage = () => {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-all ${
-                active
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-all ${active
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-text-secondary hover:text-text-primary'
-              }`}
+                }`}
             >
               <Icon className="h-4 w-4" />
               {t.label}
@@ -429,6 +542,64 @@ const ReportesPage = () => {
               </table>
             </div>
           )}
+
+          {historial.length > 0 && tiposActivos.length > 0 && (
+            <Card padding="md">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-text-primary">
+                    <PieChartIcon className="h-4 w-4" />
+                    Gráfico Estadístico
+                  </h3>
+                  <select
+                    value={chartTipo}
+                    onChange={(e) => setChartTipo(e.target.value)}
+                    className="h-9 w-44 rounded-input border border-border bg-surface px-2.5 text-xs text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    <option value="">Seleccionar tipo</option>
+                    {tiposActivos.map((t) => (
+                      <option key={t.id} value={t.id}>{t.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+                {chartTipo && estudianteDonutData.length > 0 ? (
+                  <div className="flex justify-center">
+                    <ResponsiveContainer width="100%" height={260}>
+                      <PieChart>
+                        <Pie
+                          data={estudianteDonutData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={100}
+                          dataKey="value"
+                          paddingAngle={3}
+                          label={donutLabel}
+                          labelLine={false}
+                        >
+                          {estudianteDonutData.map((entry, i) => (
+                            <Cell key={i} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend
+                          verticalAlign="bottom"
+                          iconType="circle"
+                          formatter={(value: string) => (
+                            <span className="text-xs text-text-primary">{value}</span>
+                          )}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : chartTipo ? (
+                  <p className="py-6 text-center text-sm text-text-muted">
+                    Sin datos para este tipo de registro en el rango seleccionado.
+                  </p>
+                ) : null}
+              </div>
+            </Card>
+          )}
         </div>
       )}
 
@@ -545,13 +716,13 @@ const ReportesPage = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-surface-alt text-left text-xs font-medium text-text-muted">
-                    <th className="px-3 py-2.5 min-w-[180px] sticky left-0 bg-surface-alt z-10">
+                    <th className="px-2 py-1.5 min-w-[120px] sticky left-0 bg-surface-alt z-10 text-[11px]">
                       Estudiante
                     </th>
                     {(() => {
                       const fechas = [...new Set(matriz.map((r) => r.fecha))].sort()
                       return fechas.map((f) => (
-                        <th key={f} className="px-3 py-2.5 text-center min-w-[90px]">
+                        <th key={f} className="px-1.5 py-1.5 text-center min-w-[80px] text-[11px]">
                           {f}
                         </th>
                       ))
@@ -582,11 +753,11 @@ const ReportesPage = () => {
                       const dates = byStudent.get(est.id) ?? new Map()
                       return (
                         <tr key={est.id} className="border-t border-border hover:bg-surface-alt/50">
-                          <td className="px-3 py-2.5 sticky left-0 bg-surface z-10">
-                            <p className="font-medium text-text-primary truncate">
-                              {est.nombreCompleto}
+                          <td className="px-2 py-1.5 sticky left-0 bg-surface z-10">
+                            <p className="text-xs font-medium text-text-primary truncate leading-tight">
+                              {abreviarNombre(est.nombreCompleto)}
                             </p>
-                            <p className="text-xs text-text-muted font-mono">
+                            <p className="text-[10px] text-text-muted font-mono leading-tight">
                               {est.codigo}
                             </p>
                           </td>
@@ -596,7 +767,7 @@ const ReportesPage = () => {
                               ? tipo.categorias.find((c) => c.id === catId)
                               : undefined
                             return (
-                              <td key={f} className="px-3 py-2.5 text-center">
+                              <td key={f} className="px-1.5 py-1.5 text-center text-[11px]">
                                 {cat ? (
                                   <Badge variant={cat.color as any}>
                                     {cat.nombre}
@@ -614,6 +785,105 @@ const ReportesPage = () => {
                 </tbody>
               </table>
             </div>
+          )}
+
+          {matriz.length > 0 && selectedTipoRpt && (
+            <Card padding="md">
+              <div className="flex flex-col gap-4">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-text-primary">
+                  <BarChart3 className="h-4 w-4" />
+                  Gráficos Estadísticos
+                </h3>
+
+                {/* Donut */}
+                {seccionDonutData.length > 0 && (
+                  <>
+                    <h4 className="text-xs font-medium text-text-secondary">
+                      Distribución general
+                    </h4>
+                    <div className="flex justify-center">
+                      <ResponsiveContainer width="100%" height={240}>
+                        <PieChart>
+                          <Pie
+                            data={seccionDonutData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={55}
+                            outerRadius={90}
+                            dataKey="value"
+                            paddingAngle={3}
+                            label={donutLabel}
+                            labelLine={false}
+                          >
+                            {seccionDonutData.map((entry, i) => (
+                              <Cell key={i} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend
+                            verticalAlign="bottom"
+                            iconType="circle"
+                            formatter={(value: string) => (
+                              <span className="text-xs text-text-primary">{value}</span>
+                            )}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                )}
+
+                {/* Barras por estudiante */}
+                {seccionBarData.length > 0 && (
+                  <>
+                    <h4 className="text-xs font-medium text-text-secondary">
+                      Resumen por estudiante
+                    </h4>
+                    <div className="overflow-x-auto">
+                      <ResponsiveContainer width="100%" minWidth={500} height={Math.max(250, seccionBarData.length * 44)}>
+                        <BarChart
+                          data={seccionBarData}
+                          layout="vertical"
+                          margin={{ left: 10, right: 10, top: 8, bottom: 8 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                          <XAxis type="number" tick={{ fontSize: 11 }} />
+                          <YAxis
+                            type="category"
+                            dataKey="nombre"
+                            interval={0}
+                            tick={{ fontSize: 10 }}
+                            width={90}
+                          />
+                          <Tooltip />
+                          <Legend
+                            verticalAlign="top"
+                            iconType="circle"
+                            formatter={(value: string) => (
+                              <span className="text-xs text-text-primary">{value}</span>
+                            )}
+                          />
+                          {(() => {
+                            const tipo = tiposActivos.find((t) => t.id === selectedTipoRpt)
+                            return tipo
+                              ? tipo.categorias.map((cat) => (
+                                <Bar
+                                  key={cat.id}
+                                  dataKey={cat.nombre}
+                                  stackId="a"
+                                  fill={CATEGORY_HEX[cat.color]}
+                                  radius={[2, 2, 2, 2]}
+                                />
+                              ))
+                              : null
+                          })()}
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                )}
+              </div>
+            </Card>
           )}
         </div>
       )}
