@@ -10,6 +10,7 @@ import { useEstudiantesStore } from '../store/estudiantesStore'
 import { useTiposRegistroStore } from '../store/tiposRegistroStore'
 import { getRegistrosByFechaAndGrado, upsertRegistros, deleteRegistros } from '../db/registrosRepository'
 import { useToastStore } from '../store/toastStore'
+import { unformatGrado } from '../lib/grado'
 import type { Registro, ColorCategoria } from '../types'
 import Card from '../components/Card'
 import Button from '../components/Button'
@@ -74,13 +75,20 @@ const RegistroPage = () => {
     loadTipos()
   }, [loadAll, loadTipos])
 
-  const gradosFiltrados = grados.filter((g) => {
-    if (!g.activo) return false
-    if (user?.rol === 'docente' && user.gradosAsignados.length > 0) {
-      return user.gradosAsignados.includes(g.id)
-    }
-    return true
-  })
+  const gradosFiltrados = grados
+    .filter((g) => {
+      if (!g.activo) return false
+      if (user?.rol === 'docente' && user.gradosAsignados.length > 0) {
+        return user.gradosAsignados.includes(g.id)
+      }
+      return true
+    })
+    .sort((a, b) => {
+      const numA = parseInt(unformatGrado(a.grado), 10)
+      const numB = parseInt(unformatGrado(b.grado), 10)
+      if (numA !== numB) return numA - numB
+      return a.seccion.localeCompare(b.seccion)
+    })
 
   const estudiantesSeccion = estudiantes.filter(
     (e) => e.activo && e.gradoSeccionId === selectedGrado,
