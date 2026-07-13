@@ -228,8 +228,9 @@ const RespaldoPage = () => {
       </Card>
 
       <Card padding="sm">
-        <h3 className="mb-3 text-sm font-semibold text-text-primary">
+        <h3 className="mb-3 text-sm font-semibold text-text-primary flex items-center gap-2">
           Actualizar aplicacion
+          <span className="text-xs font-normal text-text-muted">V1.8</span>
         </h3>
         <p className="mb-4 text-sm text-text-secondary">
           Elimina los archivos en cache (JS, CSS, etc.) y descarga la version
